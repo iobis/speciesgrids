@@ -1,0 +1,9 @@
+.DS_Store
+data
+output
+*.pyc
+.vscode
+.snakemake
+__pycache__
+dev.py
+
