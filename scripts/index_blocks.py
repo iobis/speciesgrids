@@ -14,29 +14,48 @@ logger = logging.getLogger(__name__)
 def main(input_file, quadkey_level, h3_resolution):
 
     quadkeys = get_quadkeys(int(quadkey_level))
-    dataset, subset = re.search("data/(.*)/(.*)\\.parquet", input_file).groups()
+    dataset, subset = re.search("data/(.*)/(.*)", input_file).groups()
 
     logger.info(f"Indexing {input_file}, dataset {dataset}, subset {subset}")
 
     os.makedirs(os.path.join("output", dataset), exist_ok=True)
 
+    # get columns
+
+    res_cols = duckdb.query(f"describe select * from read_parquet('{input_file}')").fetchall()
+    cols = [col[0] for col in res_cols]
+
+    # query blocks
+
     for quadkey in quadkeys:
         south, west = quadkey.to_geo(anchor=TileAnchor.ANCHOR_SW)
         north, east = quadkey.to_geo(anchor=TileAnchor.ANCHOR_NE)
 
-        query = f"""
-            select decimalLongitude, decimalLatitude, species, AphiaID, date_year
-            from '{input_file}'
-            where decimalLongitude >= {west} and decimalLongitude <= {east} and
-            decimalLatitude >= {south} and decimalLatitude <= {north}
-        """
+        if "gbifid" in cols:
+            query = f"""
+                select decimallongitude as decimalLongitude, decimallatitude as decimalLatitude, species, null as AphiaID, year
+                from read_parquet('{input_file}')
+                where decimallongitude >= {west} and decimallongitude <= {east} and
+                decimallatitude >= {south} and decimallatitude <= {north}
+            """
+        else:
+            query = f"""
+                select decimalLongitude, decimalLatitude, species, AphiaID, date_year as year
+                from read_parquet('{input_file}')
+                where decimalLongitude >= {west} and decimalLongitude <= {east} and
+                decimalLatitude >= {south} and decimalLatitude <= {north}
+            """
+
         df = duckdb.query(query).df()
         df = df.h3.geo_to_h3(h3_resolution, "decimalLatitude", "decimalLongitude")
 
-        result = df.groupby([f"h3_0{h3_resolution}", "species", "AphiaID"]).agg(
+        if len(df) > 0:
+            print(1)
+
+        result = df.groupby([f"h3_0{h3_resolution}", "species", "AphiaID"], dropna=False).agg(
             records=("species", "size"),
-            min_year=("date_year", lambda x: x.min(skipna=True)),
-            max_year=("date_year", lambda x: x.max(skipna=True))
+            min_year=("year", lambda x: x.min(skipna=True)),
+            max_year=("year", lambda x: x.max(skipna=True))
         ).reset_index()
 
         output_file = f"output/{dataset}/{subset}_{quadkey}.parquet"
