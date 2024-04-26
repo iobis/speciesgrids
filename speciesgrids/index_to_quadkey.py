@@ -27,7 +27,7 @@ def index_to_quadkey(input_file, quadkey_level, h3_resolution, overwrite=False):
     # check if output already exists
 
     output_files = [os.path.join(OUTPUT_DIR, dataset, subset, quadkey) for quadkey in quadkeys]
-    if overwrite and all([os.path.exists(output_file) for output_file in output_files]):
+    if not overwrite and all([os.path.exists(output_file) for output_file in output_files]):
         logger.info("Output already exists, skipping")
         return
     else:
@@ -75,9 +75,6 @@ def index_to_quadkey(input_file, quadkey_level, h3_resolution, overwrite=False):
 
     df = df.h3.geo_to_h3(h3_resolution, "decimalLatitude", "decimalLongitude", set_index=True)
     df.reset_index(inplace=True)
-
-    # if (df['h3_07'] == "0").any():
-    #     print(1)
 
     df.drop(["decimalLongitude", "decimalLatitude"], axis=1, inplace=True)
 

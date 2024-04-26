@@ -2,6 +2,8 @@ import sys
 import os
 import logging
 import glob
+import re
+import duckdb
 
 
 logger = logging.getLogger(__name__)
@@ -13,14 +15,18 @@ def merge_quadkeys():
 
     # get relevant files within datasets and subsets
 
-    datasets = [dataset for dataset in os.listdir(TEMP_DIR) if os.path.isdir(os.path.join(TEMP_DIR, dataset))]
+    files = [file for file in glob.iglob(os.path.join("output", "**"), recursive=True) if re.search("/[0-9]+$", file)]
+    quadkeys = list(set([re.search("[0-9]+$", file).group(0) for file in files]))
 
-    for dataset in datasets:
-
-        files = glob.glob(os.path.join(dataset, "**/\\d+"), recursive=True)
-        for file in files:
-            print(file)
     # merge
+
+    for quadkey in quadkeys:
+        quadkey_files = [file for file in files if re.search(f"/{quadkey}$", file)]
+        for file in quadkey_files:
+            df = duckdb.query(f"select * from read_parquet('{file}')").df()
+            if len(df) > 0:
+                print(df)
+
     # output
 
 
