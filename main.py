@@ -1,23 +1,24 @@
-from speciesgrids.index_to_quadkey import index_to_quadkey
-from speciesgrids.match_names import match_names
 import logging
 import os
+from speciesgrids.index_to_quadkey import index_to_quadkey
+from speciesgrids.worms_to_parquet import worms_to_parquet
+from speciesgrids.merge_quadkeys import merge_quadkeys
 
 
 logging.basicConfig(format="%(asctime)s %(message)s", level=logging.INFO)
 
 
-DATASETS = ["gbif"]
+SOURCES = ["obis", "gbif"]
 QUADKEY_LEVEL = 3
 H3_RESOLUTION = 7
 
 
-# for dataset in DATASETS:
+# worms_to_parquet()
 
+# for dataset in SOURCES:
 #     files = os.listdir(f"data/{dataset}")
-
-#     for file in files:
+#     for file in [f for f in files if not f.startswith(".")]:
 #         path = os.path.join("data", dataset, file)
-#         index_to_quadkey(path, QUADKEY_LEVEL, H3_RESOLUTION)
+#         index_to_quadkey(path, QUADKEY_LEVEL, H3_RESOLUTION, overwrite=True)
 
-match_names("gbif")
+merge_quadkeys(H3_RESOLUTION, SOURCES)

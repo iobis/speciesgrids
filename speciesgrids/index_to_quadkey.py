@@ -11,6 +11,48 @@ import os
 
 logger = logging.getLogger(__name__)
 OUTPUT_DIR = "temp"
+WORMS_MAPPING = "worms/worms_mapping.parquet"
+
+
+def summarize_occurrences(df: pd.DataFrame, h3_resolution, quadkey_level) -> pd.DataFrame:
+    
+    # fix types
+
+    df["min_year"] = df["min_year"].astype("Int64")
+    df["max_year"] = df["max_year"].astype("Int64")
+
+    # handle empty result set
+
+    if len(df) == 0:
+        for quadkey in quadkeys:
+            output_file = os.path.join(OUTPUT_DIR, dataset, subset, quadkey)
+            pd.DataFrame().to_parquet(output_file)
+        return
+
+    # calculate h3, drop coordinates
+
+    df = df.h3.geo_to_h3(h3_resolution, "decimalLatitude", "decimalLongitude", set_index=True)
+    df.reset_index(inplace=True)
+
+    df.drop(["decimalLongitude", "decimalLatitude"], axis=1, inplace=True)
+
+    # aggregate by h3
+
+    df = df.groupby([f"h3_0{h3_resolution}", "species", "AphiaID"], dropna=False).agg(
+        records=("records", lambda x: x.sum()),
+        min_year=("min_year", lambda x: x.min(skipna=True)),
+        max_year=("max_year", lambda x: x.max(skipna=True))
+    ).reset_index()
+
+    # calculate center geometry and quadkey, drop geometry
+
+    df.set_index(f"h3_0{h3_resolution}", inplace=True)
+    df = df.h3.h3_to_geo()
+    df["quadkey"] = df.apply(lambda row: row_to_quadkey(row, quadkey_level), axis=1)
+    df = pd.DataFrame(df.drop(columns="geometry"))
+    df.reset_index(inplace=True)
+
+    return df
 
 
 def index_to_quadkey(input_file, quadkey_level, h3_resolution, overwrite=False):
@@ -45,14 +87,15 @@ def index_to_quadkey(input_file, quadkey_level, h3_resolution, overwrite=False):
             select
                 decimallongitude as decimalLongitude,
                 decimallatitude as decimalLatitude,
-                species,
-                null as AphiaID,
+                worms.scientificName as species,
+                worms.AphiaID::int64 as AphiaID,
                 min(year) as min_year,
                 max(year) as max_year,
                 count(*) as records
             from read_parquet('{input_file}')
-            where species is not null and decimallongitude is not null and decimallatitude is not null
-            group by decimallongitude, decimallatitude, species
+            left join read_parquet('{WORMS_MAPPING}') worms on specieskey = ID
+            where worms.AphiaID is not null and decimallongitude is not null and decimallatitude is not null
+            group by decimallongitude, decimallatitude, worms.scientificName, worms.AphiaID
         """
     else:
         query = f"""
@@ -70,29 +113,7 @@ def index_to_quadkey(input_file, quadkey_level, h3_resolution, overwrite=False):
         """
 
     df = duckdb.query(query).to_df()
-
-    # calculate h3, drop coordinates
-
-    df = df.h3.geo_to_h3(h3_resolution, "decimalLatitude", "decimalLongitude", set_index=True)
-    df.reset_index(inplace=True)
-
-    df.drop(["decimalLongitude", "decimalLatitude"], axis=1, inplace=True)
-
-    # aggregate by h3
-
-    df = df.groupby([f"h3_0{h3_resolution}", "species", "AphiaID"], dropna=False).agg(
-        records=("records", lambda x: x.sum()),
-        min_year=("min_year", lambda x: x.min(skipna=True)),
-        max_year=("max_year", lambda x: x.max(skipna=True))
-    ).reset_index()
-
-    # calculate center geometry and quadkey, drop geometry
-
-    df.set_index(f"h3_0{h3_resolution}", inplace=True)
-    df = df.h3.h3_to_geo()
-    df["quadkey"] = df.apply(lambda row: row_to_quadkey(row, quadkey_level), axis=1)
-    df = pd.DataFrame(df.drop(columns="geometry"))
-    df.reset_index(inplace=True)
+    df = summarize_occurrences(df, h3_resolution, quadkey_level)
 
     # output
 
@@ -100,7 +121,7 @@ def index_to_quadkey(input_file, quadkey_level, h3_resolution, overwrite=False):
         df_quadkey = df[df["quadkey"] == quadkey]
         output_file = os.path.join(OUTPUT_DIR, dataset, subset, quadkey)
         logger.info(f"Writing {len(df_quadkey)} results to {output_file}")
-        df_quadkey.drop(columns="quadkey").to_parquet(output_file)
+        df_quadkey.drop(columns="quadkey").to_parquet(output_file, index=False)
 
 
 if __name__ == "__main__":

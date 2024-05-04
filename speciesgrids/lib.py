@@ -12,5 +12,5 @@ def get_quadkeys(level):
 def row_to_quadkey(row, level):
     """Get the quadkey for a geopandas row."""
 
-    quadkey = QuadKey.from_geo((row["geometry"].x, row["geometry"].y), level)
+    quadkey = QuadKey.from_geo((row["geometry"].y, row["geometry"].x), level)
     return quadkey.key

@@ -7,3 +7,8 @@ output
 __pycache__
 dev.py
 temp
+debug.R
+debug.py
+temp_matches
+temp_names
+worms
