@@ -52,6 +52,7 @@ def merge_quadkeys(h3_resolution, sources):
 
         df.set_index(f"h3_0{h3_resolution}", inplace=True)
         df = df.h3.h3_to_geo()
+        df[f"h3_0{h3_resolution}"] = df.index
 
         # output
 
