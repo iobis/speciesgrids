@@ -21,4 +21,4 @@ H3_RESOLUTION = 7
 #         path = os.path.join("data", dataset, file)
 #         index_to_quadkey(path, QUADKEY_LEVEL, H3_RESOLUTION, overwrite=True)
 
-merge_quadkeys(H3_RESOLUTION, SOURCES)
+# merge_quadkeys(H3_RESOLUTION, SOURCES)
