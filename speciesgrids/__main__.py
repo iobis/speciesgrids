@@ -11,11 +11,11 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(asctime)s %(message)s", level=logging.INFO)
 
 
-class DatasetBuilder(WormsBuilder, Indexer, Merger):
+class DatasetBuilder(WormsBuilder, Merger, Indexer):
 
-    def __init__(self, sources: dict, h3_resolution: int = 7, quadkey_level: int = 3, output_path: str = None, temp_path: str = None, worms_taxon_path: str = None, worms_matching_path: str = None, worms_profile_path: str = None):
+    def __init__(self, sources: dict, aggregation: dict, quadkey_level: int = 3, output_path: str = None, temp_path: str = None, worms_taxon_path: str = None, worms_matching_path: str = None, worms_profile_path: str = None):
         self.sources = sources
-        self.h3_resolution = h3_resolution
+        self.aggregation = aggregation
         self.quadkey_level = quadkey_level
         self.output_path = output_path
         self.temp_path = temp_path if temp_path else tempfile.TemporaryDirectory()
@@ -42,7 +42,10 @@ def main():
             "obis": "data/obis",
             "gbif": "data/gbif"
         },
-        h3_resolution=7,
+        aggregation={
+            "type": "h3",
+            "resolution": 7
+        },
         quadkey_level=3,
         output_path="output",
         worms_taxon_path="data/worms/WoRMS_OBIS/taxon.txt",
@@ -50,7 +53,8 @@ def main():
         worms_profile_path="data/worms/WoRMS_OBIS/speciesprofile.txt",
         temp_path="temp"
     )
-    builder.build(worms=False, index=False, merge=True)
+    print(builder.__class__.__bases__)
+    builder.build(worms=False, index=True, merge=False)
 
 
 if __name__ == "__main__":

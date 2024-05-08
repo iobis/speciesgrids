@@ -12,7 +12,28 @@ logger = logging.getLogger(__name__)
 
 class Indexer:
 
+    def index(self):
+
+        for source, source_path in self.sources.items():
+
+            logger.info(f"Processing source {source}")
+            source_output_path = os.path.join(self.temp_path, source)
+            logger.info(f"Clearing output directory {source_output_path}")
+            shutil.rmtree(source_output_path)
+            os.makedirs(source_output_path, exist_ok=False)
+
+            for file in self.get_source_files(source_path):
+                source_file = os.path.join(source_path, file)
+                output_path = os.path.join(self.temp_path, source, file)
+                os.makedirs(output_path, exist_ok=False)
+                self.index_to_quadkey(source_file, output_path)
+
     def summarize_occurrences(self, df: pd.DataFrame) -> pd.DataFrame:
+
+        if self.aggregation["type"] == "h3":
+            return self.summarize_occurrences_h3(df)
+
+    def summarize_occurrences_h3(self, df: pd.DataFrame) -> pd.DataFrame:
 
         # fix types
 
@@ -21,14 +42,14 @@ class Indexer:
 
         # calculate h3, drop coordinates
 
-        df = df.h3.geo_to_h3(self.h3_resolution, "decimalLatitude", "decimalLongitude", set_index=True)
-        df.reset_index(inplace=True)
-
+        df = df.h3.geo_to_h3(self.aggregation["resolution"], "decimalLatitude", "decimalLongitude", set_index=True)
+        # df.reset_index(inplace=True)
+        df["cell"] = df.index
         df.drop(["decimalLongitude", "decimalLatitude"], axis=1, inplace=True)
 
         # aggregate by h3
 
-        df = df.groupby([f"h3_0{self.h3_resolution}", "species", "AphiaID"], dropna=False).agg(
+        df = df.groupby(["cell", "species", "AphiaID"], dropna=False).agg(
             records=("records", lambda x: x.sum()),
             min_year=("min_year", lambda x: x.min(skipna=True)),
             max_year=("max_year", lambda x: x.max(skipna=True))
@@ -36,7 +57,7 @@ class Indexer:
 
         # calculate center geometry and quadkey, drop geometry
 
-        df.set_index(f"h3_0{self.h3_resolution}", inplace=True)
+        df.set_index("cell", inplace=True)
         df = df.h3.h3_to_geo()
         df["quadkey"] = df.apply(lambda row: row_to_quadkey(row, self.quadkey_level), axis=1)
         df = pd.DataFrame(df.drop(columns="geometry"))
@@ -46,6 +67,8 @@ class Indexer:
 
     def index_to_quadkey(self, source_file, output_path):
         """Indexes an occurrence parquet file to H3 and partitions output by quadkey."""
+
+        worms_output_path = os.path.join(self.temp_path, "worms_mapping.parquet")
 
         # create query
 
@@ -63,7 +86,7 @@ class Indexer:
                     max(year) as max_year,
                     count(*) as records
                 from read_parquet('{source_file}')
-                left join read_parquet('{WORMS_MAPPING}') worms on specieskey = ID
+                left join read_parquet('{worms_output_path}') worms on specieskey = ID
                 where worms.AphiaID is not null and decimallongitude is not null and decimallatitude is not null
                 group by decimallongitude, decimallatitude, worms.scientificName, worms.AphiaID
             """
@@ -101,19 +124,3 @@ class Indexer:
             output_file = os.path.join(output_path, quadkey)
             logger.info(f"Writing {len(df_quadkey)} results to {output_file}")
             df_quadkey.drop(columns="quadkey").to_parquet(output_file, index=False)
-
-    def index(self):
-
-        for source, source_path in self.sources.items():
-
-            logger.info(f"Processing source {source}")
-            source_output_path = os.path.join(self.temp_path, source)
-            logger.info(f"Clearing output directory {source_output_path}")
-            shutil.rmtree(source_output_path)
-            os.makedirs(source_output_path, exist_ok=False)
-
-            for file in self.get_source_files(source_path):
-                source_file = os.path.join(source_path, file)
-                output_path = os.path.join(self.temp_path, source, file)
-                os.makedirs(output_path, exist_ok=False)
-                self.index_to_quadkey(source_file, output_path)
