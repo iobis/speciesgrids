@@ -1,12 +1,12 @@
 .DS_Store
 data
-output
+output*
 *.pyc
 .vscode
 .snakemake
 __pycache__
 dev.py
-temp
+temp*
 debug.R
 debug.py
 temp_matches

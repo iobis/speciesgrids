@@ -3,6 +3,8 @@ import logging
 import duckdb
 import pandas as pd
 from lib import clear_directory
+import geohash2
+import geopandas
 
 
 logger = logging.getLogger(__name__)
@@ -13,8 +15,22 @@ class Merger:
     def read_df(self, file):
         return duckdb.query(f"select * from read_parquet('{file}')").df()
 
+    def add_geometry(self, df) -> pd.DataFrame:
+        if self.aggregation["type"] == "h3":
+            df.set_index("cell", inplace=True)
+            df = df.h3.h3_to_geo()
+            df["cell"] = df.index
+        elif self.aggregation["type"] == "geohash":
+            df[["y", "x"]] = df["cell"].apply(lambda x: geohash2.decode_exactly(x)[0:2]).apply(pd.Series)
+            df = geopandas.GeoDataFrame(df, geometry=geopandas.points_from_xy(df.x, df.y), crs="EPSG:4326")
+            df.drop(["x", "y"], axis=1, inplace=True)
+        else:
+            raise ValueError(f"Unsupported aggregation type {self.aggregation['type']}")
+        return df
+
     def merge(self):
 
+        os.makedirs(self.output_path, exist_ok=True)
         clear_directory(self.output_path)
 
         for quadkey in self.quadkeys:
@@ -38,7 +54,7 @@ class Merger:
             for source in self.sources:
                 aggs[f"source_{source}"] = "any"
 
-            df = df.groupby([f"h3_0{self.h3_resolution}", "species", "AphiaID"], dropna=False).agg(aggs).reset_index()
+            df = df.groupby(["cell", "species", "AphiaID"], dropna=False).agg(aggs).reset_index()
 
             df["min_year"] = df["min_year"].astype("Int64")
             df["max_year"] = df["max_year"].astype("Int64")
@@ -46,9 +62,7 @@ class Merger:
 
             # to geopandas
 
-            df.set_index(f"h3_0{self.h3_resolution}", inplace=True)
-            df = df.h3.h3_to_geo()
-            df[f"h3_0{self.h3_resolution}"] = df.index
+            df = self.add_geometry(df)
 
             # output
 

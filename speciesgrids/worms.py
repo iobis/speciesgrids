@@ -40,6 +40,5 @@ class WormsBuilder:
         df = df.merge(profiles, left_on="acceptedNameUsageID", right_on="taxonID")[["ID", "acceptedNameUsageID", "scientificName", "marine"]]
         df["AphiaID"] = df.acceptedNameUsageID.str.extract("(\d+)")
         df = df[df["marine"]][["ID", "AphiaID", "scientificName"]]
-        worms_output_path = os.path.join(self.temp_path, "worms_mapping.parquet")
-        logging.info(f"Writing WoRMS mapping for {len(df)} species to {worms_output_path}")
-        df.to_parquet(worms_output_path, index=False)
+        logging.info(f"Writing WoRMS mapping for {len(df)} species to {self.worms_output_path}")
+        df.to_parquet(self.worms_output_path, index=False)
