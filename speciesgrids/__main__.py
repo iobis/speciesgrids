@@ -13,7 +13,7 @@ logging.basicConfig(format="%(asctime)s %(message)s", level=logging.INFO)
 
 class DatasetBuilder(WormsBuilder, Merger, Indexer):
 
-    def __init__(self, sources: dict, aggregation: dict, quadkey_level: int = 3, output_path: str = None, temp_path: str = None, worms_taxon_path: str = None, worms_matching_path: str = None, worms_profile_path: str = None, worms_output_path: str = None):
+    def __init__(self, sources: dict, aggregation: dict, quadkey_level: int = 3, output_path: str = None, temp_path: str = None, worms_taxon_path: str = None, worms_matching_path: str = None, worms_profile_path: str = None, worms_redlist_path: str = None, worms_output_path: str = None):
         self.sources = sources
         self.aggregation = aggregation
         self.quadkey_level = quadkey_level
@@ -22,6 +22,7 @@ class DatasetBuilder(WormsBuilder, Merger, Indexer):
         self.worms_taxon_path = worms_taxon_path
         self.worms_matching_path = worms_matching_path
         self.worms_profile_path = worms_profile_path
+        self.worms_redlist_path = worms_redlist_path
         self.worms_output_path = worms_output_path
         self.quadkeys = get_quadkeys(self.quadkey_level)
 
@@ -52,14 +53,15 @@ def main():
             "resolution": 4
         },
         quadkey_level=3,
-        output_path="output_geohash",
+        output_path="geohash_4",
         worms_taxon_path="data/worms/WoRMS_OBIS/taxon.txt",
         worms_matching_path="data/worms/match-dataset-2011.tsv",
         worms_profile_path="data/worms/WoRMS_OBIS/speciesprofile.txt",
+        worms_redlist_path="data/worms/redlist.tsv",
         worms_output_path="data/worms/worms_mapping.parquet",
         temp_path="temp_geohash"
     )
-    builder.build(worms=False, index=True, merge=True)
+    builder.build(worms=True, index=True, merge=True)
 
 
 if __name__ == "__main__":

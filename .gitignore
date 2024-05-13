@@ -13,3 +13,9 @@ temp_matches
 temp_names
 worms
 temp.py
+.Rproj.user
+geohash_*
+h3_*
+ne_10m_ocean
+richness.gpkg
+richness.png

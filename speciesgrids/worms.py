@@ -1,6 +1,5 @@
 import pandas as pd
 import logging
-import os
 
 
 class WormsBuilder:
@@ -27,9 +26,15 @@ class WormsBuilder:
         df = df[["taxonID", "marine"]]
         return df
 
+    def read_redlist(self) -> pd.DataFrame:
+        logging.info(f"Reading Red List file from {self.worms_redlist_path}")
+        df = pd.read_csv(self.worms_redlist_path, sep="\t")
+        return df
+
     def worms_to_parquet(self):
 
         worms = self.read_worms()
+        redlist = self.read_redlist()
         worms_matching = self.read_worms_matching()
         profiles = self.read_profiles()
 
@@ -38,7 +43,8 @@ class WormsBuilder:
         df = df.merge(worms[["taxonID", "taxonRank", "scientificName"]], left_on="acceptedNameUsageID", right_on="taxonID")[["ID", "acceptedNameUsageID", "scientificName", "taxonRank"]]
         df = df[df["taxonRank"] == "species"]
         df = df.merge(profiles, left_on="acceptedNameUsageID", right_on="taxonID")[["ID", "acceptedNameUsageID", "scientificName", "marine"]]
+        df = df.merge(redlist, left_on="scientificName", right_on="species", how="left")[["ID", "acceptedNameUsageID", "scientificName", "marine", "category"]]
         df["AphiaID"] = df.acceptedNameUsageID.str.extract("(\d+)")
-        df = df[df["marine"]][["ID", "AphiaID", "scientificName"]]
+        df = df[df["marine"]][["ID", "AphiaID", "scientificName", "category"]]
         logging.info(f"Writing WoRMS mapping for {len(df)} species to {self.worms_output_path}")
         df.to_parquet(self.worms_output_path, index=False)
