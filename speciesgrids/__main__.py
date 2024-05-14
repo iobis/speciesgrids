@@ -29,7 +29,7 @@ class DatasetBuilder(WormsBuilder, Merger, Indexer):
     def get_source_files(self, source_path):
         return [f for f in os.listdir(source_path) if not f.startswith(".")]
 
-    def build(self, worms=True, index=True, merge=True):
+    def build(self, worms=False, index=False, merge=True):
         if worms:
             self.worms_to_parquet()
         if index:
@@ -57,11 +57,11 @@ def main():
         worms_taxon_path="data/worms/WoRMS_OBIS/taxon.txt",
         worms_matching_path="data/worms/match-dataset-2011.tsv",
         worms_profile_path="data/worms/WoRMS_OBIS/speciesprofile.txt",
-        worms_redlist_path="data/worms/redlist.tsv",
+        worms_redlist_path="data/worms/redlist.parquet",
         worms_output_path="data/worms/worms_mapping.parquet",
         temp_path="temp_geohash"
     )
-    builder.build(worms=True, index=True, merge=True)
+    builder.build(worms=False, index=False, merge=True)
 
 
 if __name__ == "__main__":

@@ -30,6 +30,12 @@ class Merger:
 
     def merge(self):
 
+        # read red list
+
+        redlist = pd.read_parquet(self.worms_redlist_path)
+
+        # merge
+
         os.makedirs(self.output_path, exist_ok=True)
         clear_directory(self.output_path)
 
@@ -59,6 +65,10 @@ class Merger:
             df["min_year"] = df["min_year"].astype("Int64")
             df["max_year"] = df["max_year"].astype("Int64")
             df["AphiaID"] = df["AphiaID"].astype("Int32")
+
+            # add red list
+
+            df = df.merge(redlist, left_on="species", right_on="species", how="left")
 
             # to geopandas
 
