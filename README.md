@@ -2,6 +2,13 @@
 
 This Python package builds gridded datasets of marine species distributions as GeoParquet based on the OBIS and GBIF occurrence snapshots. The package currently supports Geohash and H3 grids.
 
+## Data access
+
+```
+s3://obis-products/speciesgrids/geohash_4
+s3://obis-products/speciesgrids/h3_7
+```
+
 ## Data preparation
 
 The following source datasets need to be prepared:
