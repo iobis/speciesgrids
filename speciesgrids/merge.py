@@ -3,8 +3,6 @@ import logging
 import duckdb
 import pandas as pd
 from lib import clear_directory
-import geohash2
-import geopandas
 
 
 logger = logging.getLogger(__name__)
@@ -14,19 +12,6 @@ class Merger:
 
     def read_df(self, file):
         return duckdb.query(f"select * from read_parquet('{file}')").df()
-
-    def add_geometry(self, df) -> pd.DataFrame:
-        if self.aggregation["type"] == "h3":
-            df.set_index("cell", inplace=True)
-            df = df.h3.h3_to_geo()
-            df["cell"] = df.index
-        elif self.aggregation["type"] == "geohash":
-            df[["y", "x"]] = df["cell"].apply(lambda x: geohash2.decode_exactly(x)[0:2]).apply(pd.Series)
-            df = geopandas.GeoDataFrame(df, geometry=geopandas.points_from_xy(df.x, df.y), crs="EPSG:4326")
-            df.drop(["x", "y"], axis=1, inplace=True)
-        else:
-            raise ValueError(f"Unsupported aggregation type {self.aggregation['type']}")
-        return df
 
     def merge(self):
 
@@ -72,7 +57,7 @@ class Merger:
 
             # to geopandas
 
-            df = self.add_geometry(df)
+            df = self.grid.add_geometry(df)
 
             # output
 
