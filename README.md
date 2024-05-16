@@ -15,6 +15,14 @@ gdf.explore(column="records", cmap="viridis", legend=True, tiles="CartoDB positr
 
 ![screenshot](screenshot.png)
 
+```python
+gdf.set_index("h3_07", inplace=True)
+gdf = gdf.h3.h3_to_geo_boundary()
+gdf.explore(column="records", cmap="viridis", legend=True, tiles="CartoDB positron")
+```
+
+![screenshot](screenshot_grid.png)
+
 ## Data preparation
 
 The following source datasets need to be prepared:
