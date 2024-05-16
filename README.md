@@ -43,6 +43,6 @@ aws s3 sync h3_7 s3://obis-products/speciesgrids/h3_7
 ## Data access
 
 ```
-s3://obis-products/speciesgrids/geohash_4
-s3://obis-products/speciesgrids/h3_7
+aws s3 cp --recursive s3://obis-products/speciesgrids/geohash_4 ./geohash_4
+aws s3 cp --recursive s3://obis-products/speciesgrids/h3_7 ./h3_7
 ```
