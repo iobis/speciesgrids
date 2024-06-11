@@ -1,8 +1,17 @@
 # speciesgrids
 
-This Python package builds gridded datasets of marine species distributions as GeoParquet based on the OBIS and GBIF occurrence snapshots. The package currently supports Geohash and H3 grids.
+This Python package builds gridded datasets of WoRMS aligned marine species distributions as GeoParquet based on the OBIS and GBIF occurrence snapshots. The package currently supports Geohash and H3 grid output.
 
-## Data usage example
+## Data usage
+### Data access
+
+A number of grids are available for download from S3:
+
+```bash
+aws s3 cp --recursive s3://obis-products/speciesgrids .
+```
+
+### Data exploration using geopandas
 
 ```python
 import geopandas
@@ -23,7 +32,13 @@ gdf.explore(column="records", cmap="viridis", legend=True, tiles="CartoDB positr
 
 ![screenshot](screenshot_grid.png)
 
-## Data preparation
+### Notebooks
+
+Other data usage examples are available as [notebooks](notebooks).
+
+## For developers
+
+### Data preparation
 
 The following source datasets need to be prepared:
 
@@ -33,7 +48,7 @@ The following source datasets need to be prepared:
 - IUCN Red List export
 - GBIF taxonomic backbone to WoRMS taxonomy from ChecklistBank
 
-## Run
+### Run
 
 Adapt the file paths and grid configuration in `speciesgrids/__main__.py` and run:
 
@@ -41,16 +56,9 @@ Adapt the file paths and grid configuration in `speciesgrids/__main__.py` and ru
 python -m speciesgrids
 ```
 
-## Upload
+### Upload to S3
 
 ```
 aws s3 sync geohash_4 s3://obis-products/speciesgrids/geohash_4
 aws s3 sync h3_7 s3://obis-products/speciesgrids/h3_7
-```
-
-## Data access
-
-```
-aws s3 cp --recursive s3://obis-products/speciesgrids/geohash_4 ./geohash_4
-aws s3 cp --recursive s3://obis-products/speciesgrids/h3_7 ./h3_7
 ```
