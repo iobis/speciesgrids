@@ -3,6 +3,18 @@
 This Python package builds gridded datasets of WoRMS aligned marine species distributions as GeoParquet based on the OBIS and GBIF occurrence snapshots. The package currently supports Geohash and H3 grid output.
 
 ## Data usage
+### Citing
+
+When using this data product, please copy the citations provided below:
+
+```
+OBIS (2024). speciesgrids (version 0.1.0). https://github.com/iobis/speciesgrids
+GBIF.org (1 May 2024) GBIF Occurrence Data https://doi.org/10.15468/dl.ubwn8z
+OBIS (25 October 2023) OBIS Occurrence Snapshot. Ocean Biodiversity Information System. Intergovernmental Oceanographic Commission of UNESCO. https://obis.org.
+World Register of Marine Species. Available from https://www.marinespecies.org at VLIZ. Accessed 2024-05-01. doi:10.14284/170.
+IUCN. 2023. The IUCN Red List of Threatened Species. Version 2023-1. https://www.iucnredlist.org. Accessed on 13 May 2024.
+```
+
 ### Data access
 
 A number of grids are available for download from S3:
