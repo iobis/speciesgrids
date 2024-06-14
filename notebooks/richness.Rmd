@@ -1,0 +1,85 @@
+---
+title: Marine species richness based on OBIS and GBIF
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(robis)
+library(rgbif)
+library(dplyr)
+library(arrow)
+library(sfarrow)
+library(sf)
+library(ggplot2)
+library(mapview)
+library(leaflet)
+
+world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
+
+ds <- open_dataset("../geohash_4")
+df <- ds %>%
+  group_by(cell) %>% 
+  summarize(species = n_distinct(AphiaID), redlist = sum(!is.na(category))) %>% 
+  collect()
+
+df_sf <- geohashTools::gh_to_sf(df$cell)
+df_sf <- bind_cols(df_sf, df)
+
+sf_use_s2(FALSE)
+ocean <- sf::read_sf("../ne_10m_ocean/ne_10m_ocean.shp") %>% st_make_valid()
+filtered = st_filter(df_sf, ocean, .predicate = st_intersects)
+
+ggplot() +
+  geom_sf(data = filtered, aes(fill = species), color = NA) +
+  scale_fill_gradientn(colours = rev(c("#7d1500", "#da4325", "#eca24e", "#e7e2bc", "#5cc3af", "#0a6265")), trans = "log10") +
+  theme_void()
+ggsave("richness.png", width = 12, height = 6, dpi = 400, scale = 1.5, bg = "white")
+
+ggplot() +
+  geom_sf(data = filtered, aes(fill = redlist), color = NA) +
+  scale_fill_gradientn(colours = rev(c("#7d1500", "#da4325", "#eca24e", "#e7e2bc", "#5cc3af", "#0a6265")), trans = "log10", na.value = "#ffffff") +
+  theme_void()
+ggsave("redlist.png", width = 12, height = 6, dpi = 400, scale = 1.5, bg = "white")
+
+sf::write_sf(filtered %>% select(species, redlist), "richness.gpkg", driver = "GPKG")
+```
+
+Alternative color scales:
+
+```{r}
+colors <- rev(c("#39544cff", "#386757ff", "#359b73ff", "#4bc392ff", "#7ce0b3ff", "#f4ffeaff"))
+breaks <- c(1, 10, 50, 100, 150, 200, 10000)
+
+ggplot() +
+  geom_sf(data = filtered, aes(fill = species), color = NA) +
+  binned_scale(aesthetics = "fill",
+               scale_name = "stepsn",
+               palette = function(x) colors,
+               breaks = breaks,
+               limits = range(breaks),
+               show.limits = TRUE,
+               guide = "colorsteps"
+  ) +
+  theme_void()
+
+ggsave("original.jpg", width = 12, height = 6, dpi = 100, scale = 1, bg = "white")
+
+colors <- rcartocolor::carto_pal(6, "Geyser")
+breaks <- c(1, 10, 50, 100, 150, 200, 10000)
+
+ggplot() +
+  geom_sf(data = filtered, aes(fill = species), color = NA) +
+  binned_scale(aesthetics = "fill",
+               scale_name = "stepsn",
+               palette = function(x) colors,
+               breaks = breaks,
+               limits = range(breaks),
+               show.limits = TRUE,
+               guide = "colorsteps"
+  ) +
+  theme_void()
+
+ggsave("diverging.jpg", width = 12, height = 6, dpi = 100, scale = 1, bg = "white")
+```

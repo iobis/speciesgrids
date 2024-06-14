@@ -24,7 +24,9 @@ A number of grids are available for download from S3:
 aws s3 cp --recursive s3://obis-products/speciesgrids .
 ```
 
-### Data exploration using geopandas
+### Example: data exploration using geopandas
+
+This example uses a local copy of the dataset to explore the distribution of a species.
 
 ```python
 import geopandas
@@ -44,6 +46,51 @@ gdf.explore(column="records", cmap="viridis", legend=True, tiles="CartoDB positr
 ```
 
 ![screenshot](screenshot_grid.png)
+
+### Example: regional species list in R
+
+This example indexes a complex polygon and queries the GeoParquet dataset on AWS.
+
+```r
+library(readr)
+library(h3jsr)
+library(sf)
+library(duckdb)
+library(DBI)
+library(dplyr)
+
+sf_use_s2(FALSE)
+
+# Read WKT from text file, convert to sf, and index to H3 resolution 7
+# https://wktmap.com/?e6b28728
+
+wkt <- read_file("wkt_21773.txt")
+geom <- st_as_sfc(wkt, crs = 4326)
+cells <- data.frame(cell = polygon_to_cells(geom, 7)[[1]])
+
+# Set up duckdb connection and register cells table
+
+con <- dbConnect(duckdb())
+dbSendQuery(con, "install httpfs; load httpfs;")
+duckdb_register(con, "cells", cells)
+
+# Join cells list and gridded species dataset
+
+species <- dbGetQuery(con, "
+  select species, AphiaID
+  from cells
+  inner join read_parquet('s3://obis-products/speciesgrids/h3_7/*') h3 on cells.cell = h3.h3_07
+  group by species, AphiaID
+")
+
+# Add WoRMS taxonomy
+
+id_batches <- split(species$AphiaID, ceiling(seq_along(species$AphiaID) / 50))
+taxa_batches <- purrr::map(id_batches, worrms::wm_record)
+
+taxa <- bind_rows(taxa_batches) %>% 
+  select(AphiaID, scientificname, phylum, class, order, family, genus, scientificName = scientificname)
+```
 
 ### Notebooks
 
