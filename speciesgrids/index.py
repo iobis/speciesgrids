@@ -36,7 +36,14 @@ class Indexer:
         res_cols = duckdb.query(f"describe select * from read_parquet('{source_file}')").fetchall()
         cols = [col[0] for col in res_cols]
 
+        if len(self.predicates) > 0:
+            predicates_str = " and " + " and ".join(self.predicates)
+        else:
+            predicates_str = ""
+
         if "gbifid" in cols:
+            if not self.species:
+                raise ValueError("Only species level supported for GBIF data")
             query = f"""
                 select
                     decimallongitude as decimalLongitude,
@@ -49,31 +56,49 @@ class Indexer:
                 from read_parquet('{source_file}')
                 left join read_parquet('{self.worms_output_path}') worms on specieskey = ID
                 where worms.AphiaID is not null and decimallongitude is not null and decimallatitude is not null
+                {predicates_str}
                 group by decimallongitude, decimallatitude, worms.scientificName, worms.AphiaID
             """
         else:
-            query = f"""
-                select
-                    decimalLongitude,
-                    decimalLatitude,
-                    species,
-                    AphiaID,
-                    min(date_year) as min_year,
-                    max(date_year) as max_year,
-                    count(*) as records
-                from read_parquet('{source_file}')
-                where species is not null and decimalLongitude is not null and decimalLatitude is not null
-                group by decimalLongitude, decimalLatitude, species, AphiaID
-            """
+            if self.species:
+                query = f"""
+                    select
+                        decimalLongitude,
+                        decimalLatitude,
+                        species,
+                        AphiaID,
+                        min(date_year) as min_year,
+                        max(date_year) as max_year,
+                        count(*) as records
+                    from read_parquet('{source_file}')
+                    where species is not null and decimalLongitude is not null and decimalLatitude is not null
+                    {predicates_str}
+                    group by decimalLongitude, decimalLatitude, species, AphiaID
+                """
+            else:
+                query = f"""
+                    select
+                        decimalLongitude,
+                        decimalLatitude,
+                        species,
+                        AphiaID,
+                        min(date_year) as min_year,
+                        max(date_year) as max_year,
+                        count(*) as records
+                    from read_parquet('{source_file}')
+                    where decimalLongitude is not null and decimalLatitude is not null
+                    {predicates_str}
+                    group by decimalLongitude, decimalLatitude, species, AphiaID
+                """
 
         df = duckdb.query(query).to_df()
 
         # handle empy dataframe
 
         if len(df) == 0:
-            for quadkey in self.quadkeys:
-                output_file = os.path.join(output_path, quadkey)
-                pd.DataFrame().to_parquet(output_file)
+            # for quadkey in self.quadkeys:
+            #     output_file = os.path.join(output_path, quadkey)
+            #     pd.DataFrame().to_parquet(output_file)
             return
 
         # fix types
@@ -89,6 +114,8 @@ class Indexer:
 
         for quadkey in self.quadkeys:
             df_quadkey = df[df["quadkey"] == quadkey]
+            if len(df_quadkey) == 0:
+                continue
             output_file = os.path.join(output_path, quadkey)
             logger.info(f"Writing {len(df_quadkey)} results to {output_file}")
             df_quadkey.drop(columns="quadkey").to_parquet(output_file, index=False)

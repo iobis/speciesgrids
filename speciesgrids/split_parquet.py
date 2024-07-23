@@ -2,8 +2,8 @@ import pyarrow.parquet as pq
 import os
 
 batch_size = 1000000
-parquet_path = "data/obis/obis_20231025.parquet"
-output_dir = "split"
+parquet_path = "data/obis_20220710.parquet"
+output_dir = "data/obis_20220710"
 
 parquet_file = pq.ParquetFile(parquet_path)
 

@@ -9,7 +9,7 @@ from grids import Grid
 
 class DatasetBuilder(WormsBuilder, Merger, Indexer):
 
-    def __init__(self, sources: dict, grid: Grid, quadkey_level: int = 3, output_path: str = None, temp_path: str = None, worms_taxon_path: str = None, worms_matching_path: str = None, worms_profile_path: str = None, worms_redlist_path: str = None, worms_output_path: str = None):
+    def __init__(self, sources: dict, grid: Grid, quadkey_level: int = 3, output_path: str = None, temp_path: str = None, worms_taxon_path: str = None, worms_matching_path: str = None, worms_profile_path: str = None, worms_redlist_path: str = None, worms_output_path: str = None, predicates: list[str] = [], species: bool = True):
         self.sources = sources
         self.grid = grid
         self.quadkey_level = quadkey_level
@@ -21,6 +21,8 @@ class DatasetBuilder(WormsBuilder, Merger, Indexer):
         self.worms_redlist_path = worms_redlist_path
         self.worms_output_path = worms_output_path
         self.quadkeys = get_quadkeys(self.quadkey_level)
+        self.predicates = predicates
+        self.species = species
 
     def get_source_files(self, source_path):
         return [f for f in os.listdir(source_path) if not f.startswith(".")]

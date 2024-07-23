@@ -31,9 +31,13 @@ class Merger:
             for source, source_path in self.sources.items():
                 for file in self.get_source_files(source_path):
                     output_path = os.path.join(self.temp_path, source, file, quadkey)
-                    file_df = self.read_df(output_path)
-                    file_df[f"source_{source}"] = True
-                    dfs.append(file_df)
+                    if os.path.isfile(output_path):
+                        file_df = self.read_df(output_path)
+                        file_df[f"source_{source}"] = True
+                        dfs.append(file_df)
+
+            if len(dfs) == 0:
+                continue
 
             df = pd.concat(dfs)
 
@@ -47,13 +51,18 @@ class Merger:
 
             df = df.groupby(["cell", "species", "AphiaID"], dropna=False).agg(aggs).reset_index()
 
-            df["min_year"] = df["min_year"].astype("Int64")
-            df["max_year"] = df["max_year"].astype("Int64")
-            df["AphiaID"] = df["AphiaID"].astype("Int32")
-
             # add red list
 
             df = df.merge(redlist, left_on="species", right_on="species", how="left")
+
+            # fix types
+
+            df["min_year"] = df["min_year"].astype("Int64")
+            df["max_year"] = df["max_year"].astype("Int64")
+            df["AphiaID"] = df["AphiaID"].astype("Int32")
+            df["species"] = pd.Series(df["species"], dtype="string")
+            df["category"] = pd.Series(df["category"], dtype="string")
+            df["cell"] = pd.Series(df["cell"], dtype="string")
 
             # to geopandas
 
