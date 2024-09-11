@@ -94,7 +94,7 @@ taxa <- bind_rows(taxa_batches) %>%
 
 ### Speedy
 
-This data product is used in the [speedy](https://github.com/iobis/speedy) package which combines species distribution data with WoRMS distributions, thermal envelopes, and kernel densities.
+This data product is used in the [speedy](https://github.com/iobis/speedy) package which combines species distribution data with WoRMS distributions, thermal envelopes, and kernel densities. Speedy in turn is used for applications such as the Pacific islands Marine bioinvasions Alert Network (PacMAN).
 
 ### Notebooks
 
