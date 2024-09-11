@@ -4,7 +4,7 @@ import pandas as pd
 import h3pandas  # noqa: F401
 import geohash2
 from pyquadkey2.quadkey import QuadKey
-from lib import row_to_quadkey
+from speciesgrids.lib import row_to_quadkey
 
 
 class Grid(ABC):

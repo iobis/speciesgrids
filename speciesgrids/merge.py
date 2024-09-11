@@ -2,7 +2,7 @@ import os
 import logging
 import duckdb
 import pandas as pd
-from lib import clear_directory
+from speciesgrids.lib import clear_directory
 
 
 logger = logging.getLogger(__name__)
@@ -15,9 +15,7 @@ class Merger:
 
     def merge(self):
 
-        # read red list
-
-        redlist = pd.read_parquet(self.worms_redlist_path)
+        redlist = None
 
         # merge
 
@@ -53,7 +51,10 @@ class Merger:
 
             # add red list
 
-            df = df.merge(redlist, left_on="species", right_on="species", how="left")
+            if self.worms_redlist_path is not None:
+                if redlist is None:
+                    redlist = pd.read_parquet(self.worms_redlist_path)
+                df = df.merge(redlist, left_on="species", right_on="species", how="left")
 
             # fix types
 
@@ -61,7 +62,8 @@ class Merger:
             df["max_year"] = df["max_year"].astype("Int64")
             df["AphiaID"] = df["AphiaID"].astype("Int32")
             df["species"] = pd.Series(df["species"], dtype="string")
-            df["category"] = pd.Series(df["category"], dtype="string")
+            if self.worms_redlist_path is not None:
+                df["category"] = pd.Series(df["category"], dtype="string")
             df["cell"] = pd.Series(df["cell"], dtype="string")
 
             # to geopandas

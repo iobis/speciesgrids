@@ -71,7 +71,8 @@ class Indexer:
                         max(date_year) as max_year,
                         count(*) as records
                     from read_parquet('{source_file}')
-                    where species is not null and decimalLongitude is not null and decimalLatitude is not null
+                    where species is not null
+                    and decimalLongitude is not null and decimalLatitude is not null
                     {predicates_str}
                     group by decimalLongitude, decimalLatitude, species, AphiaID
                 """
