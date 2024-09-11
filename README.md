@@ -92,6 +92,10 @@ taxa <- bind_rows(taxa_batches) %>%
   select(AphiaID, scientificname, phylum, class, order, family, genus, scientificName = scientificname)
 ```
 
+### Speedy
+
+This data product is used in the [speedy](https://github.com/iobis/speedy) package which combines species distribution data with WoRMS distributions, thermal envelopes, and kernel densities.
+
 ### Notebooks
 
 Other data usage examples are available as [notebooks](notebooks).
