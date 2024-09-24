@@ -38,6 +38,9 @@ class Merger:
                 continue
 
             df = pd.concat(dfs)
+            for source in self.sources:
+                if f"source_{source}" not in df.columns:
+                    df[f"source_{source}"] = False
 
             aggs = {
                 "records": lambda x: x.sum(),
