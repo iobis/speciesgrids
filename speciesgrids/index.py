@@ -54,7 +54,7 @@ class Indexer:
                     max(year) as max_year,
                     count(*) as records
                 from read_parquet('{source_file}')
-                left join read_parquet('{self.worms_output_path}') worms on specieskey = ID
+                left join read_parquet('{self.worms_mapping_output_path}') worms on specieskey = ID
                 where worms.AphiaID is not null and decimallongitude is not null and decimallatitude is not null
                 {predicates_str}
                 group by decimallongitude, decimallatitude, worms.scientificName, worms.AphiaID

@@ -52,6 +52,11 @@ class Merger:
 
             df = df.groupby(["cell", "species", "AphiaID"], dropna=False).agg(aggs).reset_index()
 
+            # add taxonomy
+
+            taxonomy = pd.read_parquet(self.worms_taxonomy_output_path)
+            df = df.merge(taxonomy.drop(columns=["species"]), left_on="AphiaID", right_on="AphiaID", how="left")
+
             # add red list
 
             if self.worms_redlist_path is not None:
@@ -64,6 +69,12 @@ class Merger:
             df["min_year"] = df["min_year"].astype("Int64")
             df["max_year"] = df["max_year"].astype("Int64")
             df["AphiaID"] = df["AphiaID"].astype("Int32")
+            df["kingdom"] = pd.Series(df["kingdom"], dtype="string")
+            df["phylum"] = pd.Series(df["phylum"], dtype="string")
+            df["class"] = pd.Series(df["class"], dtype="string")
+            df["order"] = pd.Series(df["order"], dtype="string")
+            df["family"] = pd.Series(df["family"], dtype="string")
+            df["genus"] = pd.Series(df["genus"], dtype="string")
             df["species"] = pd.Series(df["species"], dtype="string")
             if self.worms_redlist_path is not None:
                 df["category"] = pd.Series(df["category"], dtype="string")

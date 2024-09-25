@@ -15,30 +15,31 @@ class DatasetBuilder(WormsBuilder, Merger, Indexer):
 
     Attributes:
         sources: parquet data source folders
-        quadkey_level: quadkey level for output partitioning
+        grid: grid system
         output_path: output path
         temp_path: temporary working directory path
         worms_taxon_path: WoRMS taxon file path
         worms_matching_path: WoRMS matching file path
         worms_profile_path: WoRMS profile file path
         worms_redlist_path: WoRMS red list file path
-        worms_output_path: WoRMS output path
+        worms_mapping_output_path: WoRMS mapping output path
+        worms_taxonomy_output_path: WoRMS taxonomy output path
         predicates: list of SQL predicates
         species: boolean indicating whether outpuit should be restricted to species level
     """
 
-    def __init__(self, sources: dict, grid: Grid, quadkey_level: int = 3, output_path: str = None, temp_path: str = None, worms_taxon_path: str = None, worms_matching_path: str = None, worms_profile_path: str = None, worms_redlist_path: str = None, worms_output_path: str = None, predicates: list[str] = [], species: bool = True):
+    def __init__(self, sources: dict, grid: Grid, output_path: str = None, temp_path: str = None, worms_taxon_path: str = None, worms_matching_path: str = None, worms_profile_path: str = None, worms_redlist_path: str = None, worms_mapping_output_path: str = None, worms_taxonomy_output_path: str = None, predicates: list[str] = [], species: bool = True):
         self.sources = sources
         self.grid = grid
-        self.quadkey_level = quadkey_level
         self.output_path = output_path
         self.temp_path = temp_path if temp_path else tempfile.TemporaryDirectory()
         self.worms_taxon_path = worms_taxon_path
         self.worms_matching_path = worms_matching_path
         self.worms_profile_path = worms_profile_path
         self.worms_redlist_path = worms_redlist_path
-        self.worms_output_path = worms_output_path
-        self.quadkeys = get_quadkeys(self.quadkey_level)
+        self.worms_mapping_output_path = worms_mapping_output_path
+        self.worms_taxonomy_output_path = worms_taxonomy_output_path
+        self.quadkeys = get_quadkeys(self.grid.quadkey_level)
         self.predicates = predicates
         self.species = species
 
