@@ -24,72 +24,65 @@ A number of grids are available for download from S3:
 aws s3 cp --recursive s3://obis-products/speciesgrids .
 ```
 
-### Example: data exploration using geopandas
+### Example: species distributions
 
-This example uses a local copy of the dataset to explore the distribution of a species.
+This example uses a local copy of the dataset to explore the distribution of Gadus species.
 
 ```python
 import geopandas
+import lonboard
+import seaborn as sns
 
-filters = [("AphiaID", "==", 141433)]
+filters = [("genus", "==", "Gadus")]
+gdf = geopandas.read_parquet("../h3_7/", filters=filters)[["cell", "records", "geometry", "species"]]
 
-gdf = geopandas.read_parquet("../h3_7/", filters=filters)
-gdf.explore(column="records", cmap="viridis", legend=True, tiles="CartoDB positron")
+def generate_colors(unique_species):
+    palette = sns.color_palette("Paired", len(unique_species))
+    rgb_colors = [[int(r*255), int(g*255), int(b*255)] for r, g, b in palette]
+    color_map = dict(zip(unique_species, rgb_colors))
+    colors = lonboard.colormap.apply_categorical_cmap(gdf["species"], color_map)
+    return colors
+
+point_layer = lonboard.ScatterplotLayer.from_geopandas(gdf)
+point_layer.get_radius = 10000
+point_layer.radius_max_pixels = 2
+point_layer.get_fill_color = generate_colors(gdf["species"].unique())
+lonboard.Map([point_layer])
 ```
 
-![screenshot](screenshot.png)
-
-```python
-gdf.set_index("h3_07", inplace=True)
-gdf = gdf.h3.h3_to_geo_boundary()
-gdf.explore(column="records", cmap="viridis", legend=True, tiles="CartoDB positron")
-```
-
-![screenshot](screenshot_grid.png)
+![screenshot](screenshot_gadus.png)
 
 ### Example: regional species list in R
 
-This example indexes a complex polygon and queries the GeoParquet dataset on AWS.
+This spatially queries the GeoParquet dataset on AWS using a WKT geometry.
 
 ```r
-library(readr)
-library(h3jsr)
-library(sf)
 library(duckdb)
 library(DBI)
 library(dplyr)
+library(jsonlite)
+library(glue)
+library(stringr)
 
-sf_use_s2(FALSE)
+# Read WKT from https://wktmap.com/?e6b28728
 
-# Read WKT from text file, convert to sf, and index to H3 resolution 7
-# https://wktmap.com/?e6b28728
+wkt <- fromJSON("https://xpjpbiqaa3.execute-api.us-east-1.amazonaws.com/prod/wkt/e6b28728")$wkt %>% 
+  str_replace("<.*?>\\s", "")
 
-wkt <- read_file("wkt_21773.txt")
-geom <- st_as_sfc(wkt, crs = 4326)
-cells <- data.frame(cell = polygon_to_cells(geom, 7)[[1]])
-
-# Set up duckdb connection and register cells table
+# Set up duckdb connection and extensions
 
 con <- dbConnect(duckdb())
 dbSendQuery(con, "install httpfs; load httpfs;")
-duckdb_register(con, "cells", cells)
+dbSendQuery(con, "install spatial; load spatial;")
 
-# Join cells list and gridded species dataset
+# Query
 
-species <- dbGetQuery(con, "
-  select species, AphiaID
-  from cells
-  inner join read_parquet('s3://obis-products/speciesgrids/h3_7/*') h3 on cells.cell = h3.h3_07
-  group by species, AphiaID
-")
-
-# Add WoRMS taxonomy
-
-id_batches <- split(species$AphiaID, ceiling(seq_along(species$AphiaID) / 50))
-taxa_batches <- purrr::map(id_batches, worrms::wm_record)
-
-taxa <- bind_rows(taxa_batches) %>% 
-  select(AphiaID, scientificname, phylum, class, order, family, genus, scientificName = scientificname)
+species <- dbGetQuery(con, glue("
+  select kingdom, phylum, class, family, genus, species, AphiaID
+  from read_parquet('s3://obis-products/speciesgrids/h3_7/*')
+  where ST_Intersects(geometry, ST_GeomFromText('{wkt}')) 
+  group by kingdom, phylum, class, family, genus, species, AphiaID
+"))
 ```
 
 ### Speedy
