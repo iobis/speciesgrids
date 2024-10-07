@@ -20,7 +20,7 @@ dbSendQuery(con, "install spatial; load spatial;")
 
 species <- dbGetQuery(con, glue("
   select kingdom, phylum, class, family, genus, species, AphiaID
-  from read_parquet('s3://obis-products/speciesgrids/h3_7/*')
+  from read_parquet('../h3_7/*')
   where ST_Intersects(geometry, ST_GeomFromText('{wkt}')) 
   group by kingdom, phylum, class, family, genus, species, AphiaID
 "))
