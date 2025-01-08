@@ -21,7 +21,7 @@ Gearty W, Chamberlain S (2022). rredlist: IUCN Red List Client. R package versio
 A number of grids are available for download from S3:
 
 ```bash
-aws s3 cp --recursive s3://obis-products/speciesgrids .
+aws s3 cp --recursive s3://obis-products/speciesgrids/h3_7 . --no-sign-request
 ```
 
 ### Example: species distributions
