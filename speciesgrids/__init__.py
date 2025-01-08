@@ -25,7 +25,7 @@ class DatasetBuilder(WormsBuilder, Merger, Indexer):
         worms_mapping_output_path: WoRMS mapping output path
         worms_taxonomy_output_path: WoRMS taxonomy output path
         predicates: list of SQL predicates
-        species: boolean indicating whether outpuit should be restricted to species level
+        species: boolean indicating whether output should be restricted to species level
     """
 
     def __init__(self, sources: dict, grid: Grid, output_path: str = None, temp_path: str = None, worms_taxon_path: str = None, worms_matching_path: str = None, worms_profile_path: str = None, worms_redlist_path: str = None, worms_mapping_output_path: str = None, worms_taxonomy_output_path: str = None, predicates: list[str] = [], species: bool = True):
