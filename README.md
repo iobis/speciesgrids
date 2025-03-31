@@ -119,3 +119,7 @@ python -m speciesgrids
 aws s3 sync geohash_4 s3://obis-products/speciesgrids/geohash_4
 aws s3 sync h3_7 s3://obis-products/speciesgrids/h3_7
 ```
+
+## Funding
+
+Funded by the European Union under the Horizon Europe Programme, Grant Agreement No. 101112823 (DTO-BioFlow). Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Research Executive Agency (REA). Neither the European Union nor the granting authority can be held responsible for them.
