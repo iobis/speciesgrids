@@ -1,16 +1,17 @@
 import pandas as pd
 import logging
+import sqlite3
 
 
 class WormsBuilder:
 
-    def read_worms_species(self) -> pd.DataFrame:
-        logging.info(f"Reading WoRMS taxon file from {self.worms_taxon_path}")
-        df = pd.read_csv(self.worms_taxon_path, sep="\t")
-        df = df[["taxonID", "acceptedNameUsageID", "scientificName", "acceptedNameUsage", "taxonRank"]]
-        df["taxonRank"] = df["taxonRank"].str.lower()
-        df = df[df["taxonRank"] == "species"]
-        return df
+    # def read_worms_species(self) -> pd.DataFrame:
+    #     logging.info(f"Reading WoRMS taxon file from {self.worms_taxon_path}")
+    #     df = pd.read_csv(self.worms_taxon_path, sep="\t")
+    #     df = df[["taxonID", "acceptedNameUsageID", "scientificName", "acceptedNameUsage", "taxonRank"]]
+    #     df["taxonRank"] = df["taxonRank"].str.lower()
+    #     df = df[df["taxonRank"] == "species"]
+    #     return df
 
     def read_worms_taxonomy(self) -> pd.DataFrame:
         logging.info(f"Reading WoRMS taxon file from {self.worms_taxon_path}")
@@ -42,25 +43,29 @@ class WormsBuilder:
         df = pd.read_csv(self.worms_redlist_path, sep="\t")
         return df
 
+    def read_worms_ids(self):
+        con = sqlite3.connect(self.worms_db_path)
+        df = pd.read_sql_query("""
+            select cast(p.aphiaid as text) as inputID, cast(pp.aphiaid as text) as AphiaID, pp.canonical as scientificName
+            from parsed p
+            inner join parsed pp on pp.aphiaid = p.valid_aphiaid
+            where (pp.record->'isMarine' or pp.record->>'isBrackish') is true and pp.record->>'rank' = 'Species'
+            order by p.aphiaid
+        """, con)
+        return df
+
     def worms_to_parquet(self):
 
         # GBIF to WoRMS mapping
 
-        worms = self.read_worms_species()
-        worms_matching = self.read_worms_matching()
-        profiles = self.read_profiles()
-
-        df = worms_matching[["ID", "inputID"]]
-        df = df.merge(worms[["taxonID", "acceptedNameUsageID"]], left_on="inputID", right_on="taxonID")[["ID", "acceptedNameUsageID"]]
-        df = df.merge(worms[["taxonID", "taxonRank", "scientificName"]], left_on="acceptedNameUsageID", right_on="taxonID")[["ID", "acceptedNameUsageID", "scientificName", "taxonRank"]]
-        df = df[df["taxonRank"] == "species"]
-        df = df.merge(profiles, left_on="acceptedNameUsageID", right_on="taxonID")[["ID", "acceptedNameUsageID", "scientificName", "marine"]]
-        df["AphiaID"] = df.acceptedNameUsageID.str.extract("(\\d+)")
-        df = df[df["marine"]][["ID", "AphiaID", "scientificName"]]
+        worms_matching = self.read_worms_matching()[["ID", "inputID"]]
+        worms = self.read_worms_ids()
+        worms_matching["inputID"] = worms_matching.inputID.str.extract("(\\d+)")
+        df = worms_matching.merge(worms, left_on="inputID", right_on="inputID")[["ID", "AphiaID", "scientificName"]]
         logging.info(f"Writing WoRMS mapping for {len(df)} species to {self.worms_mapping_output_path}")
         df.to_parquet(self.worms_mapping_output_path, index=False)
 
-        # accepted taxonomy
+        # # accepted taxonomy
 
-        taxonomy = self.read_worms_taxonomy()
-        taxonomy.to_parquet(self.worms_taxonomy_output_path, index=False)
+        # taxonomy = self.read_worms_taxonomy()
+        # taxonomy.to_parquet(self.worms_taxonomy_output_path, index=False)

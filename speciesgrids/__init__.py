@@ -19,6 +19,7 @@ class DatasetBuilder(WormsBuilder, Merger, Indexer):
         output_path: output path
         temp_path: temporary working directory path
         worms_taxon_path: WoRMS taxon file path
+        worms_db_path: WoRMS sqlite file path
         worms_matching_path: WoRMS matching file path
         worms_profile_path: WoRMS profile file path
         worms_redlist_path: WoRMS red list file path
@@ -28,12 +29,13 @@ class DatasetBuilder(WormsBuilder, Merger, Indexer):
         species: boolean indicating whether output should be restricted to species level
     """
 
-    def __init__(self, sources: dict, grid: Grid, output_path: str = None, temp_path: str = None, worms_taxon_path: str = None, worms_matching_path: str = None, worms_profile_path: str = None, worms_redlist_path: str = None, worms_mapping_output_path: str = None, worms_taxonomy_output_path: str = None, predicates: list[str] = [], species: bool = True):
+    def __init__(self, sources: dict, grid: Grid, output_path: str = None, temp_path: str = None, worms_taxon_path: str = None, worms_db_path: str = None, worms_matching_path: str = None, worms_profile_path: str = None, worms_redlist_path: str = None, worms_mapping_output_path: str = None, worms_taxonomy_output_path: str = None, predicates: list[str] = [], species: bool = True):
         self.sources = sources
         self.grid = grid
         self.output_path = output_path
         self.temp_path = temp_path if temp_path else tempfile.TemporaryDirectory()
         self.worms_taxon_path = worms_taxon_path
+        self.worms_db_path = worms_db_path
         self.worms_matching_path = worms_matching_path
         self.worms_profile_path = worms_profile_path
         self.worms_redlist_path = worms_redlist_path
