@@ -5,23 +5,15 @@ import sqlite3
 
 class WormsBuilder:
 
-    # def read_worms_species(self) -> pd.DataFrame:
-    #     logging.info(f"Reading WoRMS taxon file from {self.worms_taxon_path}")
-    #     df = pd.read_csv(self.worms_taxon_path, sep="\t")
-    #     df = df[["taxonID", "acceptedNameUsageID", "scientificName", "acceptedNameUsage", "taxonRank"]]
-    #     df["taxonRank"] = df["taxonRank"].str.lower()
-    #     df = df[df["taxonRank"] == "species"]
-    #     return df
-
     def read_worms_taxonomy(self) -> pd.DataFrame:
-        logging.info(f"Reading WoRMS taxon file from {self.worms_taxon_path}")
-        df = pd.read_csv(self.worms_taxon_path, sep="\t")
-        df = df[df["scientificNameID"] == df["acceptedNameUsageID"]]
-        df["AphiaID"] = df.acceptedNameUsageID.str.extract("(\\d+)")
-        df["AphiaID"] = df["AphiaID"].astype("Int64")
-        df["taxonRank"] = df["taxonRank"].str.lower()
-        df.loc[df["taxonRank"] == "species", "species"] = df["scientificName"]
-        df = df[["AphiaID", "kingdom", "phylum", "class", "order", "family", "genus", "species"]]
+        logging.info(f"Reading WoRMS taxon file from {self.worms_db_path}")
+        con = sqlite3.connect(self.worms_db_path)
+        df = pd.read_sql_query("""
+            select cast(aphiaid as int64) as AphiaID, record->>'kingdom' as kingdom, record->>'phylum' as phylum, record->>'class' as class, record->>'order' as `order`, record->>'family' as family, record->>'genus' as genus, record->>'species' as species
+            from parsed
+            where aphiaid = valid_aphiaid and record->>'rank' = 'Species'
+            order by aphiaid
+        """, con)
         return df
 
     def read_worms_matching(self) -> pd.DataFrame:
@@ -67,5 +59,6 @@ class WormsBuilder:
 
         # # accepted taxonomy
 
-        # taxonomy = self.read_worms_taxonomy()
-        # taxonomy.to_parquet(self.worms_taxonomy_output_path, index=False)
+        taxonomy = self.read_worms_taxonomy()
+        logging.info(f"Writing WoRMS taxonomy to {self.worms_taxonomy_output_path}")
+        taxonomy.to_parquet(self.worms_taxonomy_output_path, index=False)

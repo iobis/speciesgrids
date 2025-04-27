@@ -63,33 +63,33 @@ class Indexer:
             if self.species:
                 query = f"""
                     select
-                        decimalLongitude,
-                        decimalLatitude,
-                        species,
-                        AphiaID,
-                        min(date_year) as min_year,
-                        max(date_year) as max_year,
+                        interpreted.decimalLongitude,
+                        interpreted.decimalLatitude,
+                        interpreted.species,
+                        interpreted.aphiaid as AphiaID,
+                        min(interpreted.date_year) as min_year,
+                        max(interpreted.date_year) as max_year,
                         count(*) as records
                     from read_parquet('{source_file}')
-                    where species is not null
-                    and decimalLongitude is not null and decimalLatitude is not null
+                    where interpreted.species is not null
+                    and interpreted.decimalLongitude is not null and interpreted.decimalLatitude is not null
                     {predicates_str}
-                    group by decimalLongitude, decimalLatitude, species, AphiaID
+                    group by interpreted.decimalLongitude, interpreted.decimalLatitude, interpreted.species, interpreted.aphiaid
                 """
             else:
                 query = f"""
                     select
-                        decimalLongitude,
-                        decimalLatitude,
-                        species,
-                        AphiaID,
-                        min(date_year) as min_year,
-                        max(date_year) as max_year,
+                        interpreted.decimalLongitude,
+                        interpreted.decimalLatitude,
+                        interpreted.species,
+                        interpreted.aphiaid as AphiaID,
+                        min(interpreted.date_year) as min_year,
+                        max(interpreted.date_year) as max_year,
                         count(*) as records
                     from read_parquet('{source_file}')
-                    where decimalLongitude is not null and decimalLatitude is not null
+                    where interpreted.decimalLongitude is not null and interpreted.decimalLatitude is not null
                     {predicates_str}
-                    group by decimalLongitude, decimalLatitude, species, AphiaID
+                    group by interpreted.decimalLongitude, interpreted.decimalLatitude, interpreted.species, interpreted.aphiaid
                 """
 
         df = duckdb.query(query).to_df()

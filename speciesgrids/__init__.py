@@ -34,10 +34,8 @@ class DatasetBuilder(WormsBuilder, Merger, Indexer):
         self.grid = grid
         self.output_path = output_path
         self.temp_path = temp_path if temp_path else tempfile.TemporaryDirectory()
-        self.worms_taxon_path = worms_taxon_path
         self.worms_db_path = worms_db_path
         self.worms_matching_path = worms_matching_path
-        self.worms_profile_path = worms_profile_path
         self.worms_redlist_path = worms_redlist_path
         self.worms_mapping_output_path = worms_mapping_output_path
         self.worms_taxonomy_output_path = worms_taxonomy_output_path
