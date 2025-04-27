@@ -111,8 +111,6 @@ rclone sync --progress s3:obis-datasets/pipeline/loaded /Volumes/acasis/occurren
 aws s3 sync s3://gbif-open-data-eu-central-1/occurrence/2025-04-01/occurrence.parquet/ /Volumes/acasis/gbif --region eu-central-1
 ```
 
-~~- WoRMS export (taxon and species profile tables)~~
-~~- IUCN Red List export~~
 - WoRMS sqlite database produced with the `aphiasync` package
 - GBIF taxonomic backbone to WoRMS taxonomy from ChecklistBank
 
