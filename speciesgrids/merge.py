@@ -54,7 +54,7 @@ class Merger:
 
             # add taxonomy
 
-            taxonomy = pd.read_parquet(self.worms_taxonomy_output_path)
+            taxonomy = pd.read_parquet(self.worms_taxonomy_path)
             df = df.merge(taxonomy.drop(columns=["species"]), left_on="AphiaID", right_on="AphiaID", how="left")
 
             # add red list

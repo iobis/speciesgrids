@@ -93,22 +93,22 @@ This data product is used in the [speedy](https://github.com/iobis/speedy) packa
 
 Other data usage examples are available as [notebooks](notebooks).
 
-## For developers
+## Building the dataset
 
 ### Data preparation
 
 The following source datasets need to be prepared:
 
-- OBIS occurrence snapshot
+- OBIS parquet dataset from AWS
 
 ```
-rclone sync --progress s3:obis-datasets/pipeline/loaded /Volumes/acasis/occurrence
+aws s3 sync --no-sign-request s3://obis-open-data/occurrence/ /Volumes/acasis/occurrence/
 ```
 
-- GBIF occurrence snapshot
+- GBIF occurrence snapshot from AWS
 
 ```
-aws s3 sync s3://gbif-open-data-eu-central-1/occurrence/2025-04-01/occurrence.parquet/ /Volumes/acasis/gbif --region eu-central-1
+aws s3 sync --no-sign-request s3://gbif-open-data-eu-central-1/occurrence/2025-09-01/occurrence.parquet/ /Volumes/acasis/gbif --region eu-central-1
 ```
 
 - WoRMS sqlite database produced with the `aphiasync` package
@@ -125,8 +125,7 @@ python -m speciesgrids
 ### Upload to S3
 
 ```
-aws s3 sync geohash_4 s3://obis-products/speciesgrids/geohash_4
-aws s3 sync h3_7 s3://obis-products/speciesgrids/h3_7
+aws s3 sync --delete h3_7 s3://obis-products/speciesgrids/h3_7
 ```
 
 ## Funding

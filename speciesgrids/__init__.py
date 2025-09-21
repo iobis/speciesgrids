@@ -23,22 +23,21 @@ class DatasetBuilder(WormsBuilder, Merger, Indexer):
         worms_matching_path: WoRMS matching file path
         worms_profile_path: WoRMS profile file path
         worms_redlist_path: WoRMS red list file path
-        worms_mapping_output_path: WoRMS mapping output path
-        worms_taxonomy_output_path: WoRMS taxonomy output path
+        worms_mapping_path: WoRMS mapping path
+        worms_taxonomy_path: WoRMS taxonomy output path
         predicates: list of SQL predicates
         species: boolean indicating whether output should be restricted to species level
     """
 
-    def __init__(self, sources: dict, grid: Grid, output_path: str = None, temp_path: str = None, worms_taxon_path: str = None, worms_db_path: str = None, worms_matching_path: str = None, worms_profile_path: str = None, worms_redlist_path: str = None, worms_mapping_output_path: str = None, worms_taxonomy_output_path: str = None, predicates: list[str] = [], species: bool = True):
+    def __init__(self, sources: dict, grid: Grid, output_path: str = None, temp_path: str = None, worms_sqlite_path: str = None, worms_mapping_path: str = None, worms_taxonomy_path: str = None, worms_redlist_path: str = None, predicates: list[str] = [], species: bool = True):
         self.sources = sources
         self.grid = grid
         self.output_path = output_path
         self.temp_path = temp_path if temp_path else tempfile.TemporaryDirectory()
-        self.worms_db_path = worms_db_path
-        self.worms_matching_path = worms_matching_path
+        self.worms_sqlite_path = worms_sqlite_path
+        self.worms_mapping_path = worms_mapping_path
+        self.worms_taxonomy_path = worms_taxonomy_path
         self.worms_redlist_path = worms_redlist_path
-        self.worms_mapping_output_path = worms_mapping_output_path
-        self.worms_taxonomy_output_path = worms_taxonomy_output_path
         self.quadkeys = get_quadkeys(self.grid.quadkey_level)
         self.predicates = predicates
         self.species = species
@@ -46,17 +45,14 @@ class DatasetBuilder(WormsBuilder, Merger, Indexer):
     def get_source_files(self, source_path):
         return [f for f in os.listdir(source_path) if not f.startswith(".")]
 
-    def build(self, worms=False, index=True, merge=True):
+    def build(self, index=True, merge=True):
         """Build the dataset.
 
         Args:
-            worms: boolean indicating whether to build the mapping from GBIF taxon ID to marine WoRMS accepted AphiaID
             index: boolean indicating whether to build quadkey index
             merge: boolean indicating whether to merge indexed data
         """
 
-        if worms:
-            self.worms_to_parquet()
         if index:
             self.index()
         if merge:
