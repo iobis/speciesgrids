@@ -1,0 +1,76 @@
+{
+    "title": "Gridded dataset of marine species occurrence",
+    "upload_type": "dataset",
+    "description": "<p>This Python package builds gridded datasets of WoRMS-aligned marine species distributions as GeoParquet based on the OBIS and GBIF occurrence snapshots. The package currently supports Geohash and H3 grid output.</p>",
+    "creators": [
+        {
+            "name": "Provoost, Pieter",
+            "orcid": "0000-0002-4236-0384",
+            "affiliation": "International Oceanographic Data and Information Exchange (IODE), IOC-UNESCO"
+        }
+    ],
+    "contributors": [
+        {
+            "name": "Ocean Biodiversity Information System",
+            "type": "Producer"
+        },
+        {
+            "name": "International Oceanographic Data and Information Exchange",
+            "type": "HostingInstitution"
+        },
+        {
+            "name": "Intergovernmental Oceanographic Commission of UNESCO",
+            "type": "RightsHolder"
+        }
+    ],
+    "license": "CC-BY-4.0",
+    "keywords": [
+        "GBIF",
+        "GeoParquet",
+        "IUCN",
+        "marine biodiversity",
+        "OBIS",
+        "ocean biodiversity",
+        "PacMAN",
+        "WoRMS"
+    ],
+    "related_identifiers": [
+        {
+            "identifier": "https://github.com/iobis/speciesgrids",
+            "relation": "isSupplementTo",
+            "resource_type": "dataset",
+            "scheme": "url"
+        },
+        {
+            "identifier": "10.15468/dl.ubwn8z",
+            "relation": "isDerivedFrom",
+            "resource_type": "dataset",
+            "scheme": "doi"
+        },
+        {
+            "identifier": "10.14284/170",
+            "relation": "isDerivedFrom",
+            "resource_type": "dataset",
+            "scheme": "doi"
+        },
+        {
+            "identifier": "https://github.com/iobis/speedy",
+            "relation": "isRelatedTo",
+            "scheme": "url"
+        }
+    ],
+    "references": [
+    "GBIF.org (1 May 2024) GBIF Occurrence Data https://doi.org/10.15468/dl.ubwn8z",
+    "OBIS (25 October 2023) OBIS Occurrence Snapshot. Ocean Biodiversity Information System. Intergovernmental Oceanographic Commission of UNESCO. https://obis.org.",
+    "World Register of Marine Species. Available from https://www.marinespecies.org at VLIZ. Accessed 2024-05-01. doi:10.14284/170.",
+    "IUCN. 2023. The IUCN Red List of Threatened Species. Version 2023-1. https://www.iucnredlist.org. Accessed on 13 May 2024.",
+    "Gearty W, Chamberlain S (2022). rredlist: IUCN Red List Client. R package version 0.7.1, https://CRAN.R-project.org/package=rredlist."
+    ],
+    
+    "grants": [
+        {
+            "id": "10.13039/501100000780::101112823"
+        }
+    ],
+    "notes": "Funded by the European Union under the Horizon Europe Programme, Grant Agreement No. 101112823 (DTO-BioFlow). Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Research Executive Agency (REA). Neither the European Union nor the granting authority can be held responsible for them."
+}
