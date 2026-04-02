@@ -1,6 +1,6 @@
 {
     "title": "Gridded dataset of marine species occurrence",
-    "upload_type": "dataset",
+    "upload_type": "software",
     "description": "<p>This Python package builds gridded datasets of WoRMS-aligned marine species distributions as GeoParquet based on the OBIS and GBIF occurrence snapshots. The package currently supports Geohash and H3 grid output.</p>",
     "creators": [
         {
