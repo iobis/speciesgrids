@@ -8,7 +8,7 @@ This Python package builds gridded datasets of WoRMS aligned marine species dist
 When using this data product, please copy the citations provided below:
 
 ```
-Provoost, P. (2024). speciesgrids (version 0.1.0). Ocean Biodiversity Information System (OBIS). https://github.com/iobis/speciesgrids
+OBIS (2024). speciesgrids (version 0.2.0). Ocean Biodiversity Information System. Intergovernmental Oceanographic Commission of UNESCO. https://doi.org/10.5281/zenodo.19392660
 
 GBIF.org (1 May 2024) GBIF Occurrence Data https://doi.org/10.15468/dl.ubwn8z
 
