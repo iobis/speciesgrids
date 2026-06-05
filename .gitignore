@@ -20,3 +20,6 @@ ne_10m_ocean
 richness.gpkg
 richness.png
 legacy
+
+app/.svelte-kit
+app/node_modules

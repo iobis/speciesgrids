@@ -1,6 +1,13 @@
-# speciesgrids
+# <img src="logo.jpg" width="160px" align="right" /> `speciesgrids` - cloud-optimized gridded dataset of marine species occurrence
 
-This Python package builds gridded datasets of WoRMS aligned marine species distributions as GeoParquet based on the OBIS and GBIF occurrence snapshots. The package currently supports Geohash and H3 grid output.
+[![DOI](https://img.shields.io/badge/DOI-10.5281/zenodo.19392660-blue)](https://doi.org/10.5281/zenodo.19392660)
+[![Products catalogue](https://raw.githubusercontent.com/iobis/badges/refs/heads/main/badges/obis-products_catalogue.svg)](https://products.obis.org/dataset/10-5281-zenodo-19392660)
+[![IOC](https://raw.githubusercontent.com/iobis/badges/refs/heads/main/badges/ioc-hlo1_healthy_ocean.svg)](https://www.ioc.unesco.org/en/mission-and-objectives)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/iobis/speciesgrids)
+
+`speciesgrids` is a cloud-optimized gridded datasets of WoRMS aligned marine species distributions based on the OBIS and GBIF occurrence snapshots. The dataset is available in [GeoParquet](https://geoparquet.org/) and currently supports [Geohash](https://en.wikipedia.org/wiki/Geohash) and [H3](https://h3geo.org/) grid output.
+
+This repository documents the Python package that generates the `speciesgrids` product. You can explore how to access and use this product [here](https://github.com/iobis/speciesgrids#data-access). You can also check the [notebooks](https://github.com/iobis/speciesgrids/notebooks), with examples of use in Python and R.
 
 ## Data usage
 ### Citing
