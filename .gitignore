@@ -23,3 +23,5 @@ legacy
 
 app/.svelte-kit
 app/node_modules
+app/build
+app/static/*.arrow
