@@ -1,7 +1,7 @@
 {
-    "title": "speciesgrid python package",
+    "title": "speciesgrids - cloud-optimized gridded dataset of marine species occurrence",
     "upload_type": "software",
-    "description": "<p>This Python package builds gridded datasets of WoRMS-aligned marine species distributions as GeoParquet based on the OBIS and GBIF occurrence snapshots. The package currently supports Geohash and H3 grid output.</p>",
+    "description": "speciesgrids is a cloud-optimized gridded datasets of WoRMS aligned marine species distributions based on the OBIS and GBIF occurrence snapshots. The dataset is available in GeoParquet and currently supports Geohash and H3 grid output. A Python package is used to generate the speciesgrids product.",
     "creators": [
         {
             "name": "Provoost, Pieter",
