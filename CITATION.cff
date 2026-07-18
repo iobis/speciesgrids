@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: If you use this work, please cite it as below.
+title: Gridded dataset of marine species occurrence
+type: dataset
+abstract: Gridded dataset containing all marine records on OBIS and GBIF.
+url: https://github.com/iobis/speciesgrids
+license: CC-BY-4.0
+authors:
+  - given-names: Pieter
+    family-names: Provoost
+    orcid: "https://orcid.org/0000-0002-4236-0384"
+    affiliation: "International Oceanographic Data and Information Exchange (IODE), IOC-UNESCO"
+  - name: Ocean Biodiversity Information System
+    alias: OBIS
+    website: "https://obis.org"
+  - name: International Oceanographic Data and Information Exchange
+    alias: IODE
+    website: "https://www.iode.org"
+  - name: Intergovernmental Oceanographic Commission of UNESCO
+    alias: IOC-UNESCO
+    website: "https://ioc.unesco.org"
+date-released: 2025-06-24
