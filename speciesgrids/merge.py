@@ -1,91 +1,176 @@
-import os
+"""Merge per-source H3 aggregates and write GeoParquet output.
+
+The final file is written with GeoPandas (as in earlier speciesgrids releases) so
+column dtypes, pandas metadata, and GeoArrow CRS match the historical product.
+"""
+
 import logging
-import duckdb
+import os
+import shutil
+
+import h3pandas  # noqa: F401
 import pandas as pd
-from speciesgrids.lib import clear_directory
+
+from speciesgrids.db import connect
+from speciesgrids.progress import run_busy, stage
 
 
 logger = logging.getLogger(__name__)
 
+# Column order matches the historical H3 GeoParquet product.
+_BASE_COLUMNS = [
+    "species",
+    "AphiaID",
+    "records",
+    "min_year",
+    "max_year",
+    "source_obis",
+    "source_gbif",
+    "kingdom",
+    "phylum",
+    "class",
+    "order",
+    "family",
+    "genus",
+]
+
 
 class Merger:
 
-    def read_df(self, file):
-        return duckdb.query(f"select * from read_parquet('{file}')").df()
-
-    def merge(self):
-
-        redlist = None
-
-        # merge
+    def merge(self, force: bool = False):
+        output_file = os.path.join(self.output_path, "data.parquet")
+        if os.path.isfile(output_file) and not force:
+            logger.info("[dim]Output already exists at %s; skip merge (force=False)[/dim]", output_file)
+            return
 
         os.makedirs(self.output_path, exist_ok=True)
-        clear_directory(self.output_path)
+        for name in os.listdir(self.output_path):
+            path = os.path.join(self.output_path, name)
+            if os.path.isfile(path):
+                os.remove(path)
+            elif os.path.isdir(path):
+                shutil.rmtree(path)
 
-        for quadkey in self.quadkeys:
+        parts = []
+        if "obis" in self.sources:
+            parts.append(("obis", os.path.join(self.temp_path, "obis_h3.parquet")))
+        if "gbif" in self.sources:
+            parts.append(("gbif", os.path.join(self.temp_path, "gbif_h3.parquet")))
 
-            dfs = []
+        missing = [p for _, p in parts if not os.path.isfile(p)]
+        if missing:
+            raise FileNotFoundError(f"Missing aggregate parquet(s): {missing}")
 
-            for source, source_path in self.sources.items():
-                for file in self.get_source_files(source_path):
-                    output_path = os.path.join(self.temp_path, source, file, quadkey)
-                    if os.path.isfile(output_path):
-                        file_df = self.read_df(output_path)
-                        file_df[f"source_{source}"] = True
-                        dfs.append(file_df)
+        unions = []
+        for source, path in parts:
+            unions.append(
+                f"""
+                select
+                    cell,
+                    species,
+                    AphiaID,
+                    records,
+                    min_year,
+                    max_year,
+                    {'true' if source == 'obis' else 'false'} as source_obis,
+                    {'true' if source == 'gbif' else 'false'} as source_gbif
+                from read_parquet('{path}')
+                """
+            )
 
-            if len(dfs) == 0:
-                continue
+        union_sql = " union all ".join(unions)
+        taxonomy = self.taxon.taxonomy_path
+        redlist_join = ""
+        redlist_select = ""
+        include_category = self.worms_redlist_path is not None
+        if include_category:
+            redlist_select = "red.category,"
+            redlist_join = f"""
+                left join read_parquet('{self.worms_redlist_path}') red
+                    on red.species = m.species
+            """
 
-            df = pd.concat(dfs)
-            for source in self.sources:
-                if f"source_{source}" not in df.columns:
-                    df[f"source_{source}"] = False
+        merged_path = os.path.join(self.temp_path, "merged.parquet")
 
-            aggs = {
-                "records": lambda x: x.sum(),
-                "min_year": "min",
-                "max_year": "max"
-            }
-            for source in self.sources:
-                aggs[f"source_{source}"] = "any"
+        with stage(f"Merge sources and write GeoParquet → {output_file}"):
+            def _merge_tables():
+                con = connect(os.path.join(self.temp_path, "duckdb"))
+                con.execute(
+                    f"""
+                    copy (
+                        with merged as (
+                            select
+                                cell,
+                                species,
+                                AphiaID,
+                                sum(records)::bigint as records,
+                                min(min_year)::bigint as min_year,
+                                max(max_year)::bigint as max_year,
+                                bool_or(source_obis) as source_obis,
+                                bool_or(source_gbif) as source_gbif
+                            from ({union_sql})
+                            group by cell, species, AphiaID
+                        )
+                        select
+                            m.species,
+                            m.AphiaID::integer as AphiaID,
+                            m.records,
+                            m.min_year,
+                            m.max_year,
+                            m.source_obis,
+                            m.source_gbif,
+                            t.kingdom,
+                            t.phylum,
+                            t.class,
+                            t."order",
+                            t.family,
+                            t.genus,
+                            {redlist_select}
+                            m.cell
+                        from merged m
+                        left join read_parquet('{taxonomy}') t on m.AphiaID = t.AphiaID
+                        {redlist_join}
+                    ) to '{merged_path}' (format parquet, compression zstd)
+                    """
+                )
+                con.close()
 
-            df = df.groupby(["cell", "species", "AphiaID"], dropna=False).agg(aggs).reset_index()
+            run_busy("Merging OBIS + GBIF tables…", _merge_tables)
 
-            # add taxonomy
+            def _write_geoparquet():
+                df = pd.read_parquet(merged_path)
 
-            taxonomy = pd.read_parquet(self.worms_taxonomy_path)
-            df = df.merge(taxonomy.drop(columns=["species"]), left_on="AphiaID", right_on="AphiaID", how="left")
+                # Match historical pandas dtypes / parquet metadata
+                df["min_year"] = df["min_year"].astype("Int64")
+                df["max_year"] = df["max_year"].astype("Int64")
+                df["AphiaID"] = df["AphiaID"].astype("Int32")
+                for col in ["kingdom", "phylum", "class", "order", "family", "genus", "species", "cell"]:
+                    df[col] = pd.Series(df[col], dtype="string")
+                if include_category:
+                    df["category"] = pd.Series(df["category"], dtype="string")
 
-            # add red list
+                df = df.set_index("cell")
+                gdf = df.h3.h3_to_geo()
+                gdf["cell"] = gdf.index
+                gdf = gdf.set_crs("EPSG:4326")
 
-            if self.worms_redlist_path is not None:
-                if redlist is None:
-                    redlist = pd.read_parquet(self.worms_redlist_path)
-                df = df.merge(redlist, left_on="species", right_on="species", how="left")
+                columns = list(_BASE_COLUMNS)
+                if include_category:
+                    columns.append("category")
+                columns.extend(["geometry", "cell"])
+                gdf[columns].to_parquet(output_file, index=False)
 
-            # fix types
+            run_busy(
+                "Adding H3 centroids and writing GeoPandas GeoParquet…",
+                _write_geoparquet,
+                detail="Uses the same GeoPandas/h3pandas writer as previous releases (EPSG:4326).",
+            )
 
-            df["min_year"] = df["min_year"].astype("Int64")
-            df["max_year"] = df["max_year"].astype("Int64")
-            df["AphiaID"] = df["AphiaID"].astype("Int32")
-            df["kingdom"] = pd.Series(df["kingdom"], dtype="string")
-            df["phylum"] = pd.Series(df["phylum"], dtype="string")
-            df["class"] = pd.Series(df["class"], dtype="string")
-            df["order"] = pd.Series(df["order"], dtype="string")
-            df["family"] = pd.Series(df["family"], dtype="string")
-            df["genus"] = pd.Series(df["genus"], dtype="string")
-            df["species"] = pd.Series(df["species"], dtype="string")
-            if self.worms_redlist_path is not None:
-                df["category"] = pd.Series(df["category"], dtype="string")
-            df["cell"] = pd.Series(df["cell"], dtype="string")
+            if os.path.isfile(merged_path):
+                os.remove(merged_path)
 
-            # to geopandas
-
-            df = self.grid.add_geometry(df)
-
-            # output
-
-            output_file = os.path.join(self.output_path, quadkey)
-            logger.info(f"Writing {len(df)} results to {output_file}")
-            df.to_parquet(output_file, index=False)
+            n = connect(os.path.join(self.temp_path, "duckdb")).execute(
+                f"select count(*) from read_parquet('{output_file}')"
+            ).fetchone()[0]
+            size_mb = os.path.getsize(output_file) / (1024 ** 2)
+            logger.info("Wrote %s rows (%.1f MiB) → %s", f"{n:,}", size_mb, output_file)

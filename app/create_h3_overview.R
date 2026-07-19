@@ -6,7 +6,7 @@ con <- dbConnect(duckdb())
 dbSendQuery(con, "INSTALL httpfs; LOAD httpfs;")
 dbSendQuery(con, "INSTALL h3 FROM community; LOAD h3;")
 
-S3 <- "read_parquet('s3://obis-products/speciesgrids/h3_7/*')"
+S3 <- "read_parquet('s3://obis-products/speciesgrids/h3_7/data.parquet')"
 
 # ── Overview map (H3 resolution 4) ───────────────────────────────────────────
 overview <- dbGetQuery(con, sprintf("

@@ -130,16 +130,16 @@
     <!-- Data access -->
     <section>
       <h2>Data access</h2>
-      <p>The full dataset is available on AWS S3 as partitioned Parquet files:</p>
+      <p>The full dataset is available on AWS S3 as a single GeoParquet file:</p>
 
       <div class="code-block">
         <div class="code-label">S3 path</div>
-        <pre><code>s3://obis-products/speciesgrids/h3_7/</code></pre>
+        <pre><code>s3://obis-products/speciesgrids/h3_7/data.parquet</code></pre>
       </div>
 
       <div class="code-block">
         <div class="code-label">Download with AWS CLI (no credentials needed)</div>
-        <pre><code>aws s3 cp --recursive s3://obis-products/speciesgrids/h3_7 . --no-sign-request</code></pre>
+        <pre><code>aws s3 cp --no-sign-request s3://obis-products/speciesgrids/h3_7/data.parquet .</code></pre>
       </div>
 
       <div class="code-block">
@@ -152,7 +152,7 @@ con.execute("INSTALL httpfs; LOAD httpfs; SET s3_region='us-east-1';")
 # Species distribution
 df = con.execute("""
     SELECT cell, records
-    FROM read_parquet('s3://obis-products/speciesgrids/h3_7/*')
+    FROM read_parquet('s3://obis-products/speciesgrids/h3_7/data.parquet')
     WHERE species = 'Gadus morhua'
 """).df()
 </code></pre>
@@ -168,7 +168,7 @@ dbExecute(con, "INSTALL httpfs; LOAD httpfs; SET s3_region='us-east-1';")
 
 species_list &lt;- dbGetQuery(con, "
   SELECT DISTINCT species, genus, family
-  FROM read_parquet('s3://obis-products/speciesgrids/h3_7/*')
+  FROM read_parquet('s3://obis-products/speciesgrids/h3_7/data.parquet')
   WHERE genus = 'Gadus'
   ORDER BY species
 ")
@@ -181,7 +181,7 @@ species_list &lt;- dbGetQuery(con, "
 SELECT
     h3_cell_to_parent(cell, 4) AS cell_r4,
     COUNT(DISTINCT species)    AS species_richness
-FROM read_parquet('s3://obis-products/speciesgrids/h3_7/*')
+FROM read_parquet('s3://obis-products/speciesgrids/h3_7/data.parquet')
 GROUP BY cell_r4
 ORDER BY species_richness DESC
 LIMIT 100;

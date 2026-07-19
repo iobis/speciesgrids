@@ -6,7 +6,10 @@ output*
 .snakemake
 __pycache__
 dev.py
+build/
+cache/
 temp*
+h3_*
 debug.R
 debug.py
 temp_matches
@@ -15,7 +18,6 @@ worms
 temp.py
 .Rproj.user
 geohash_*
-h3_*
 ne_10m_ocean
 richness.gpkg
 richness.png

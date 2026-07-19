@@ -18,7 +18,7 @@
   let error     = $state<string | null>(null);
 
   // ── Explore state ─────────────────────────────────────────────────────────
-  const S3 = `'s3://obis-products/speciesgrids/h3_7/*'`;
+  const S3 = `'s3://obis-products/speciesgrids/h3_7/data.parquet'`;
 
   interface MapConfig { cellCol: string; valueCol: string; metricLabel: string; }
   interface ExploreQuery {
@@ -165,7 +165,7 @@
   const OVERVIEW_SQL =
 `SELECT COUNT(DISTINCT species) AS total_species,
        h3_cell_to_parent(cell, 4) AS cell_h4
-FROM read_parquet('s3://obis-products/speciesgrids/h3_7/*')
+FROM read_parquet('s3://obis-products/speciesgrids/h3_7/data.parquet')
 GROUP BY cell_h4`;
 
   // ── Boot ──────────────────────────────────────────────────────────────────

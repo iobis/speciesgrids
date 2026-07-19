@@ -5,7 +5,7 @@
 [![IOC](https://raw.githubusercontent.com/iobis/badges/refs/heads/main/badges/ioc-hlo1_healthy_ocean.svg)](https://www.ioc.unesco.org/en/mission-and-objectives)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/iobis/speciesgrids)
 
-`speciesgrids` is a cloud-optimized gridded datasets of WoRMS aligned marine species distributions based on the OBIS and GBIF occurrence snapshots. The dataset is available in [GeoParquet](https://geoparquet.org/) and currently supports [Geohash](https://en.wikipedia.org/wiki/Geohash) and [H3](https://h3geo.org/) grid output.
+`speciesgrids` is a cloud-optimized gridded dataset of WoRMS-aligned marine species distributions based on OBIS occurrence data and a GBIF occurrence cube. The dataset is available as [GeoParquet](https://geoparquet.org/) on an [H3](https://h3geo.org/) grid.
 
 This repository documents the Python package that generates the `speciesgrids` product. You can explore how to access and use this product [here](https://github.com/iobis/speciesgrids#data-access). You can also check the [notebooks](https://github.com/iobis/speciesgrids/notebooks), with examples of use in Python and R.
 
@@ -33,7 +33,7 @@ Gearty W, Chamberlain S (2022). rredlist: IUCN Red List Client. R package versio
 An [h3 grid](https://h3geo.org/) at [resolution 7](https://h3geo.org/docs/core-library/restable/) is available for download from S3. Resolution can easily be scaled down (i.e. cells made larger) via freely available h3 tools.
 
 ```bash
-aws s3 cp --recursive s3://obis-products/speciesgrids/h3_7 . --no-sign-request
+aws s3 cp --no-sign-request s3://obis-products/speciesgrids/h3_7/data.parquet .
 ```
 
 ### Metadata
@@ -41,29 +41,14 @@ aws s3 cp --recursive s3://obis-products/speciesgrids/h3_7 . --no-sign-request
 
 #### File organization
 
-You can explore the data in the S3 bucket with [AWS CLI](https://aws.amazon.com/cli/):
-
-```
-aws s3 ls --no-sign-request --recursive s3://obis-products/speciesgrids/
-
-2024-05-13 03:47:36          0 speciesgrids/
-2025-04-27 06:40:57      58943 speciesgrids/h3_7/000
-2025-04-27 06:40:58      34851 speciesgrids/h3_7/001
-2025-04-27 06:40:58    2245913 speciesgrids/h3_7/002
-2025-04-27 06:40:58     693297 speciesgrids/h3_7/003
-...
-
-```
-
-The 64 files in h3_7/ are partitioned by [Bing Maps quadkey](https://learn.microsoft.com/en-us/bingmaps/articles/bing-maps-tile-system) at zoom level 3, with each filename (e.g. 032) corresponding to the quadkey of its tile. You could use this to selectively access specific regions of the globe. In practice, however, the full dataset is only ~600 MiB, so it's usually simpler to download the whole GeoParquet and query it locally with DuckDB. If you are working in a cloud environment, querying the GeoParquet file directly might also make sense. But for repeated querying, a local copy is probably most efficient.
+The product is a single GeoParquet file (`h3_7/data.parquet`). Download it and query locally with DuckDB, GeoPandas, or any Parquet-aware tool; in cloud environments you can also query the S3 object directly.
 
 #### Data dictionary
 
-Each parquet file contains the following columns:
+The parquet file contains the following columns:
 
 | Column        | Type         | Description |
 |---------------|--------------|-------------|
-| `cell`        | string       | Uber H3 cell index at resolution 7, as a 15-character hexadecimal string. |
 | `species`     | string       | Accepted scientific name at species rank, from WoRMS taxonomy. |
 | `AphiaID`     | int32        | WoRMS persistent taxonomic identifier. Resolvable at `https://www.marinespecies.org/aphia.php?p=taxdetails&id={AphiaID}`. |
 | `records`     | int64        | Count of underlying OBIS and GBIF occurrence records aggregated into this (cell, species) tuple. |
@@ -77,8 +62,9 @@ Each parquet file contains the following columns:
 | `order`       | string       | Taxonomic order, from WoRMS accepted taxonomy. |
 | `family`      | string       | Taxonomic family, from WoRMS accepted taxonomy. |
 | `genus`       | string       | Taxonomic genus, from WoRMS accepted taxonomy. |
-| `category`    | string       | IUCN Red List threat status, populated only for threatened or extinct categories (VU, EN, CR, EX, EW). NULL for unassessed species or species in other categories such as Least Concern. |
+| `category`    | string       | IUCN Red List threat status (only present when a redlist file is configured at build time). |
 | `geometry`    | geometry     | Centroid of the H3 cell as a Point geometry in WGS 84 (EPSG:4326), encoded per the GeoParquet specification. |
+| `cell`        | string       | Uber H3 cell index at resolution 7, as a 15-character hexadecimal string. |
 
 
 ### Example: species distributions
@@ -91,7 +77,7 @@ import lonboard
 import seaborn as sns
 
 filters = [("genus", "==", "Gadus")]
-gdf = geopandas.read_parquet("../h3_7/", filters=filters)[["cell", "records", "geometry", "species"]]
+gdf = geopandas.read_parquet("../build/h3_7/data.parquet", filters=filters)[["cell", "records", "geometry", "species"]]
 
 def generate_colors(unique_species):
     palette = sns.color_palette("Paired", len(unique_species))
@@ -136,7 +122,7 @@ dbSendQuery(con, "install spatial; load spatial;")
 
 species <- dbGetQuery(con, glue("
   select kingdom, phylum, class, family, genus, species, AphiaID
-  from read_parquet('s3://obis-products/speciesgrids/h3_7/*')
+  from read_parquet('s3://obis-products/speciesgrids/h3_7/data.parquet')
   where ST_Intersects(geometry, ST_GeomFromText('{wkt}')) 
   group by kingdom, phylum, class, family, genus, species, AphiaID
 "))
@@ -154,35 +140,42 @@ Other data usage examples are available as [notebooks](notebooks).
 
 ### Data preparation
 
-The following source datasets need to be prepared:
+Prepare these **read-only** inputs (paths are configured in `speciesgrids/__main__.py`):
 
-- OBIS parquet dataset from AWS
+- OBIS occurrence parquet from AWS
 
 ```
 aws s3 sync --no-sign-request s3://obis-open-data/occurrence/ /Volumes/acasis/occurrence/
 ```
 
-- GBIF occurrence snapshot from AWS
+- GBIF occurrence cube (TSV), e.g. downloaded from the GBIF occurrence cube export
+- WoRMS SQLite database produced with the [`aphiasync`](https://github.com/iobis/aphiasync) package (`parsed` table)
+
+Derived artefacts are written under a single project folder::
 
 ```
-aws s3 sync --no-sign-request s3://gbif-open-data-eu-central-1/occurrence/2025-09-01/occurrence.parquet/ /Volumes/acasis/gbif --region eu-central-1
+build/
+  work/                 # cube cache, taxon maps, H3 aggregates, DuckDB spill
+  h3_7/data.parquet     # final GeoParquet product
 ```
 
-- WoRMS sqlite database produced with the `aphiasync` package
-- GBIF taxonomic backbone to WoRMS taxonomy from ChecklistBank
+Nothing is written back to the source volume.
+
+GBIF scientific names are matched against the WoRMS SQLite DB (canonical name lookup, synonyms resolved via `coalesce(valid_aphiaid, aphiaid)`, marine/brackish species). OBIS `aphiaid` values are remapped the same way.
 
 ### Run
 
-Adapt the file paths and grid configuration in `speciesgrids/__main__.py` and run:
-
 ```bash
+pip install -r requirements.txt
 python -m speciesgrids
 ```
+
+The first run converts the GBIF cube TSV to Parquet under `build/work/` (slow for a multi‑ten‑GB cube) and installs DuckDB’s `h3` / `spatial` extensions if needed. Later runs reuse files in `build/work/` unless you pass `force=True` to `build()`.
 
 ### Upload to S3
 
 ```
-aws s3 sync --delete h3_7 s3://obis-products/speciesgrids/h3_7
+aws s3 cp build/h3_7/data.parquet s3://obis-products/speciesgrids/h3_7/data.parquet
 ```
 
 ## Funding

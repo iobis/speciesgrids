@@ -1,59 +1,89 @@
-import tempfile
-from speciesgrids.worms import WormsBuilder
-from speciesgrids.index import Indexer
-from speciesgrids.merge import Merger
-from speciesgrids.lib import get_quadkeys
+import logging
 import os
-from speciesgrids.grids import Grid
+
+from speciesgrids.aggregate import Aggregator
+from speciesgrids.grids import Grid, H3Grid
+from speciesgrids.merge import Merger
+from speciesgrids.progress import stage
+from speciesgrids.taxon import TaxonMatcher
 
 
-class DatasetBuilder(WormsBuilder, Merger, Indexer):
-    """
-    This class builds gridded datasets from species occurrence parquet files. Data sources
-    can include OBIS and GBIF data, but for GBIF only species level output is supported.
-    Supported grid systems include H3 and Geohash.
+logger = logging.getLogger(__name__)
 
-    Attributes:
-        sources: parquet data source folders
-        grid: grid system
-        output_path: output path
-        temp_path: temporary working directory path
-        worms_taxon_path: WoRMS taxon file path
-        worms_db_path: WoRMS sqlite file path
-        worms_matching_path: WoRMS matching file path
-        worms_profile_path: WoRMS profile file path
-        worms_redlist_path: WoRMS red list file path
-        worms_mapping_path: WoRMS mapping path
-        worms_taxonomy_path: WoRMS taxonomy output path
-        predicates: list of SQL predicates
-        species: boolean indicating whether output should be restricted to species level
+
+class DatasetBuilder(Aggregator, Merger):
+    """Build an H3-gridded GeoParquet product from OBIS and/or a GBIF occurrence cube.
+
+    All pipeline writes go under a single ``build_dir``::
+
+        build/
+          work/                 # intermediates (cube cache, taxon maps, H3 aggs, DuckDB spill)
+          h3_7/data.parquet     # final product (name from grid resolution)
     """
 
-    def __init__(self, sources: dict, grid: Grid, output_path: str = None, temp_path: str = None, worms_sqlite_path: str = None, worms_mapping_path: str = None, worms_taxonomy_path: str = None, worms_redlist_path: str = None, predicates: list[str] = [], species: bool = True):
+    def __init__(
+        self,
+        sources: dict,
+        grid: Grid = None,
+        build_dir: str = "build",
+        worms_sqlite_path: str = None,
+        worms_redlist_path: str = None,
+        predicates: list[str] = None,
+        species_only: bool = True,
+    ):
+        if grid is None:
+            grid = H3Grid(7)
+        if not isinstance(grid, H3Grid):
+            raise ValueError("Only H3Grid is supported by the DuckDB build path")
+        if worms_sqlite_path is None:
+            raise ValueError("worms_sqlite_path is required")
+
         self.sources = sources
         self.grid = grid
-        self.output_path = output_path
-        self.temp_path = temp_path if temp_path else tempfile.TemporaryDirectory()
+        self.build_dir = build_dir
+        # One work tree for every intermediate; product sits beside it.
+        self.work_path = os.path.join(build_dir, "work")
+        self.cache_path = self.work_path
+        self.temp_path = self.work_path
+        self.output_path = os.path.join(build_dir, f"h3_{grid.resolution}")
         self.worms_sqlite_path = worms_sqlite_path
-        self.worms_mapping_path = worms_mapping_path
-        self.worms_taxonomy_path = worms_taxonomy_path
         self.worms_redlist_path = worms_redlist_path
-        self.quadkeys = get_quadkeys(self.grid.quadkey_level)
-        self.predicates = predicates
-        self.species = species
+        self.predicates = predicates or []
+        self.species_only = species_only
+        self.taxon = TaxonMatcher(worms_sqlite_path, self.work_path)
 
-    def get_source_files(self, source_path):
-        return [f for f in os.listdir(source_path) if not f.startswith(".")]
-
-    def build(self, index=True, merge=True):
+    def build(self, prepare=True, aggregate=True, merge=True, force=False):
         """Build the dataset.
 
         Args:
-            index: boolean indicating whether to build quadkey index
-            merge: boolean indicating whether to merge indexed data
+            prepare: export taxonomy / match GBIF names (uses cache when present)
+            aggregate: aggregate OBIS and GBIF to H3
+            merge: merge sources and write GeoParquet
+            force: recompute cached artefacts
         """
+        os.makedirs(self.work_path, exist_ok=True)
+        os.makedirs(self.output_path, exist_ok=True)
+        logger.info(
+            "Build dir [bold]%s[/bold] — work: %s — product: %s",
+            self.build_dir,
+            self.work_path,
+            self.output_path,
+        )
 
-        if index:
-            self.index()
-        if merge:
-            self.merge()
+        with stage("Build speciesgrids dataset"):
+            cube_parquet = None
+            needs_cube = "gbif" in self.sources and (prepare or aggregate)
+            if needs_cube:
+                # Never force-rebuild the cube unless prepare/aggregate also run;
+                # merge-only rebuilds should reuse build/work/gbif_cube.parquet.
+                cube_parquet = self.cache_gbif_cube(force=force and (prepare or aggregate))
+
+            if prepare:
+                with stage("Prepare taxonomy artefacts"):
+                    self.taxon.prepare(gbif_cube_parquet=cube_parquet, force=force)
+            if aggregate:
+                with stage("Aggregate sources to H3"):
+                    self.aggregate(force=force)
+            if merge:
+                with stage("Merge and write output"):
+                    self.merge(force=force)
