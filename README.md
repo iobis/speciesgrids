@@ -157,6 +157,7 @@ Derived artefacts are written under a single project folder::
 build/
   work/                 # cube cache, taxon maps, H3 aggregates, DuckDB spill
   h3_7/data.parquet     # final GeoParquet product
+  density_3/data.parquet  # optional H3 density surfaces (see below)
 ```
 
 Nothing is written back to the source volume.
@@ -171,6 +172,22 @@ python -m speciesgrids
 ```
 
 The first run converts the GBIF cube TSV to Parquet under `build/work/` (slow for a multi‑ten‑GB cube) and installs DuckDB’s `h3` / `spatial` extensions if needed. Later runs reuse files in `build/work/` unless you pass `force=True` to `build()`.
+
+### Optional: density surfaces
+
+Kernel density at H3 resolution 3 is a **separate** step (does not run with `python -m speciesgrids`). It reads `build/h3_7/data.parquet` and writes one sorted file `build/density_3/data.parquet` with columns `AphiaID` (int32), `h3` (uint64), `density` (uint16, max-normalized × 65535; values below `1e-3` omitted).
+
+Kernels are precomputed once for each unique presence cell (~40k at res 3, reused across species) into `build/work/density/kernel_cache.npz`, then species maps are assembled from that cache.
+
+```bash
+# pilot
+python -m speciesgrids.density --aphiaids 126436,141433 --workers 8
+
+# full corpus (resumes unfinished AphiaIDs; rebuilds kernels only if missing)
+python -m speciesgrids.density --workers 8
+```
+
+Decode density with `density_u16 / 65535.0`. Filter by `AphiaID` (and optionally `h3`) for row-group pushdown. Thermal suitability is not stored; evaluate a per-species thermal profile against a shared temperature map at request time.
 
 ### Upload to S3
 
