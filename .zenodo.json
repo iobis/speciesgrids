@@ -1,7 +1,7 @@
 {
-    "title": "speciesgrids - cloud-optimized gridded dataset of marine species occurrence",
+    "title": "speciesgrids: build pipeline and documentation for a gridded dataset of marine species occurrence",
     "upload_type": "software",
-    "description": "speciesgrids is a cloud-optimized gridded datasets of WoRMS aligned marine species distributions based on the OBIS and GBIF occurrence snapshots. The dataset is available in GeoParquet and currently supports Geohash and H3 grid output. A Python package is used to generate the speciesgrids product.",
+    "description": "<p>speciesgrids is a cloud-optimized gridded dataset of WoRMS-aligned marine species distributions, built from the OBIS and GBIF occurrence snapshots. The dataset is available as GeoParquet and the build code supports <a href=\"https://h3geo.org/\">H3</a> and <a href=\"https://en.wikipedia.org/wiki/Geohash\">Geohash</a> grid output.</p><p>This archive contains the code and documentation behind the dataset: the Python build pipeline, a web viewer, and example notebooks in Python and R. It does not contain the dataset itself. The dataset (H3 resolution 7, about 600 MB) is openly available at <code>s3://obis-products/speciesgrids/h3_7/</code> and is licensed under <a href=\"https://creativecommons.org/licenses/by-nc/4.0/\">CC BY-NC 4.0</a>, following the license of its GBIF source data. The code in this archive is licensed under MIT.</p><p>Documentation, including data access instructions and a data dictionary, is available at <a href=\"https://iobis.github.io/speciesgrids/\">iobis.github.io/speciesgrids</a>.</p>",
     "creators": [
         {
             "name": "Provoost, Pieter",
@@ -23,7 +23,7 @@
             "type": "RightsHolder"
         }
     ],
-    "license": "CC-BY-4.0",
+    "license": "MIT",
     "keywords": [
         "GBIF",
         "GeoParquet",
@@ -32,13 +32,23 @@
         "OBIS",
         "ocean biodiversity",
         "PacMAN",
-        "WoRMS"
+        "WoRMS",
+        "H3",
+        "Geohash",
+        "species distribution",
+        "gridded data",
+        "Python"
     ],
     "related_identifiers": [
         {
             "identifier": "https://github.com/iobis/speciesgrids",
             "relation": "isSupplementTo",
-            "resource_type": "dataset",
+            "resource_type": "software",
+            "scheme": "url"
+        },
+        {
+            "identifier": "https://iobis.github.io/speciesgrids/",
+            "relation": "isDocumentedBy",
             "scheme": "url"
         },
         {

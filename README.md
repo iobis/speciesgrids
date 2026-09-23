@@ -5,17 +5,19 @@
 [![IOC](https://raw.githubusercontent.com/iobis/badges/refs/heads/main/badges/ioc-hlo1_healthy_ocean.svg)](https://www.ioc.unesco.org/en/mission-and-objectives)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/iobis/speciesgrids)
 
-`speciesgrids` is a cloud-optimized gridded datasets of WoRMS aligned marine species distributions based on the OBIS and GBIF occurrence snapshots. The dataset is available in [GeoParquet](https://geoparquet.org/) and currently supports [Geohash](https://en.wikipedia.org/wiki/Geohash) and [H3](https://h3geo.org/) grid output.
+`speciesgrids` is a cloud-optimized gridded dataset of WoRMS-aligned marine species distributions based on the OBIS and GBIF occurrence snapshots. The dataset is available in [GeoParquet](https://geoparquet.org/) and currently supports [Geohash](https://en.wikipedia.org/wiki/Geohash) and [H3](https://h3geo.org/) grid output.
 
-This repository documents the Python package that generates the `speciesgrids` product. You can explore how to access and use this product [here](https://github.com/iobis/speciesgrids#data-access). You can also check the [notebooks](https://github.com/iobis/speciesgrids/notebooks), with examples of use in Python and R.
+This repository contains the Python code that generates the `speciesgrids` product, along with its documentation, a web viewer, and usage examples. The dataset itself is not stored in this repository. You can explore how to access and use this product [here](https://github.com/iobis/speciesgrids#data-access). You can also check the [notebooks](https://github.com/iobis/speciesgrids/tree/main/notebooks), with examples of use in Python and R.
 
 ## Data usage
 ### Citing
 
-When using this data product, please copy the citations provided below:
+When using this data product, please copy the citations provided below. The first cites the dataset, the second the code that builds it, and the rest the source data:
 
 ```
-OBIS (2024). speciesgrids (version 0.2.0). Ocean Biodiversity Information System. Intergovernmental Oceanographic Commission of UNESCO. https://doi.org/10.5281/zenodo.19392660
+OBIS (2025). speciesgrids: gridded dataset of marine species occurrence (H3 resolution 7). Ocean Biodiversity Information System. Intergovernmental Oceanographic Commission of UNESCO. Available at s3://obis-products/speciesgrids/h3_7/
+
+Provoost, P. (2026). speciesgrids: build pipeline and documentation for a gridded dataset of marine species occurrence. Zenodo. https://doi.org/10.5281/zenodo.19392660
 
 GBIF.org (1 May 2024) GBIF Occurrence Data https://doi.org/10.15468/dl.ubwn8z
 
@@ -176,6 +178,12 @@ python -m speciesgrids
 aws s3 sync geohash_4 s3://obis-products/speciesgrids/geohash_4
 aws s3 sync h3_7 s3://obis-products/speciesgrids/h3_7
 ```
+
+## License
+
+The code in this repository is licensed under the [MIT License](LICENSE).
+
+The `speciesgrids` dataset on S3 is licensed under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/), because the GBIF occurrence download it is built from is licensed CC BY-NC 4.0. A copy of the license and a README are stored alongside the data in `s3://obis-products/speciesgrids/`.
 
 ## Funding
 
