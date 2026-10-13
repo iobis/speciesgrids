@@ -7,15 +7,17 @@
 
 `speciesgrids` is a cloud-optimized gridded dataset of WoRMS-aligned marine species distributions based on OBIS occurrence data and a GBIF occurrence cube. The dataset is available as [GeoParquet](https://geoparquet.org/) on an [H3](https://h3geo.org/) grid.
 
-This repository documents the Python package that generates the `speciesgrids` product. You can explore how to access and use this product [here](https://github.com/iobis/speciesgrids#data-access). You can also check the [notebooks](https://github.com/iobis/speciesgrids/notebooks), with examples of use in Python and R.
+This repository contains the Python code that generates the `speciesgrids` product, along with its documentation, a web viewer, and usage examples. The dataset itself is not stored in this repository. You can explore how to access and use this product [here](https://github.com/iobis/speciesgrids#data-access). You can also check the [notebooks](https://github.com/iobis/speciesgrids/tree/main/notebooks), with examples of use in Python and R.
 
 ## Data usage
 ### Citing
 
-When using this data product, please copy the citations provided below:
+When using this data product, please copy the citations provided below. The first cites the dataset, the second the code that builds it, and the rest the source data:
 
 ```
-OBIS (2024). speciesgrids (version 0.2.0). Ocean Biodiversity Information System. Intergovernmental Oceanographic Commission of UNESCO. https://doi.org/10.5281/zenodo.19392660
+OBIS (2025). speciesgrids: gridded dataset of marine species occurrence (H3 resolution 7). Ocean Biodiversity Information System. Intergovernmental Oceanographic Commission of UNESCO. Available at s3://obis-products/speciesgrids/h3_7/
+
+Provoost, P. (2026). speciesgrids: build pipeline and documentation for a gridded dataset of marine species occurrence. Zenodo. https://doi.org/10.5281/zenodo.19392660
 
 GBIF.org (1 May 2024) GBIF Occurrence Data https://doi.org/10.15468/dl.ubwn8z
 
@@ -158,6 +160,9 @@ build/
   work/                 # cube cache, taxon maps, H3 aggregates, DuckDB spill
   h3_7/data.parquet     # final GeoParquet product
   density_3/data.parquet  # optional H3 density surfaces (see below)
+  thermal_3/            # optional SST map + KDE profiles (see below)
+    thetao.parquet
+    profiles.parquet
 ```
 
 Nothing is written back to the source volume.
@@ -187,13 +192,60 @@ python -m speciesgrids.density --aphiaids 126436,141433 --workers 8
 python -m speciesgrids.density --workers 8
 ```
 
-Decode density with `density_u16 / 65535.0`. Filter by `AphiaID` (and optionally `h3`) for row-group pushdown. Thermal suitability is not stored; evaluate a per-species thermal profile against a shared temperature map at request time.
+Decode density with `density_u16 / 65535.0`. Filter by `AphiaID` (and optionally `h3`) for row-group pushdown.
+
+### Optional: thermal suitability (on the fly)
+
+Thermal KDE profiles are a **separate** step. They export a shared H3-3 SST map plus one compact profile per AphiaID (occurrence temperatures + bandwidth + `norm_max`). Suitability is **not** stored per cell — apps evaluate it at request time (Speedy / edna_qc–compatible):
+
+```text
+suitability(h3) = gaussian_kde(temps)(thetao[h3]) / norm_max
+```
+
+Requires the Bio-Oracle WOA NetCDF (`thetao_mean`), e.g. from [erddap.bio-oracle.org](https://erddap.bio-oracle.org/erddap/files/thetao_baseline_2000_2019_depthsurf/climatologydecadedepthsurf.nc). Pass `--temperature` or set `SPECIESGRIDS_TEMPERATURE`.
+
+```bash
+# pilot
+python -m speciesgrids.thermal \
+  --temperature /path/to/climatologydecadedepthsurf.nc \
+  --aphiaids 126436,141433 --workers 8
+
+# full corpus (edna_qc defaults: res 3, coarsen 4, bandwidth 2, time 2010-01-01)
+python -m speciesgrids.thermal \
+  --temperature /path/to/climatologydecadedepthsurf.nc \
+  --workers 8
+```
+
+On-the-fly combine:
+
+```python
+from scipy.stats import gaussian_kde
+import pyarrow.parquet as pq
+from speciesgrids.thermal import suitability_for_aphiaid
+
+thetao = pq.read_table("build/thermal_3/thetao.parquet").to_pandas()
+profiles = pq.read_table("build/thermal_3/profiles.parquet").to_pandas()
+
+# helper
+df = suitability_for_aphiaid(126436, profiles, thetao)  # h3, suitability
+
+# or manually
+row = profiles[profiles.AphiaID == 126436].iloc[0]
+kde = gaussian_kde(row.temps, bw_method=float(row.bandwidth))
+suit = kde.evaluate(thetao.thetao.to_numpy()) / float(row.norm_max)
+```
 
 ### Upload to S3
 
 ```
 aws s3 cp build/h3_7/data.parquet s3://obis-products/speciesgrids/h3_7/data.parquet
 ```
+
+## License
+
+The code in this repository is licensed under the [MIT License](LICENSE).
+
+The `speciesgrids` dataset on S3 is licensed under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/), because the GBIF occurrence download it is built from is licensed CC BY-NC 4.0. A copy of the license and a README are stored alongside the data in `s3://obis-products/speciesgrids/`.
 
 ## Funding
 
