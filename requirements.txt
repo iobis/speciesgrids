@@ -6,3 +6,6 @@ rich>=13.0.0
 geopandas>=0.14.0
 h3pandas>=0.2.6
 h3>=4.0.0
+xarray>=2024.1.0
+netCDF4>=1.6.0
+scipy>=1.11.0
