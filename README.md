@@ -7,7 +7,7 @@
 
 `speciesgrids` is a cloud-optimized gridded dataset of WoRMS-aligned marine species distributions based on OBIS occurrence data and a GBIF occurrence cube. The dataset is available as [GeoParquet](https://geoparquet.org/) on an [H3](https://h3geo.org/) grid.
 
-This repository contains the Python code that generates the `speciesgrids` product, along with its documentation, a web viewer, and usage examples. The dataset itself is not stored in this repository. You can explore how to access and use this product [here](https://github.com/iobis/speciesgrids#data-access). You can also check the [notebooks](https://github.com/iobis/speciesgrids/tree/main/notebooks), with examples of use in Python and R.
+This repository contains the Python code that generates the `speciesgrids` product, along with its documentation, a web viewer, and usage examples. The dataset itself is not stored in this repository. You can explore how to access and use this product [here](https://github.com/iobis/speciesgrids#data-access). You can also check the [scripts](https://github.com/iobis/speciesgrids/tree/main/scripts), with examples of use in Python and R.
 
 ## Data usage
 ### Citing
@@ -134,9 +134,9 @@ species <- dbGetQuery(con, glue("
 
 This data product is used in the [speedy](https://github.com/iobis/speedy) package which combines species distribution data with WoRMS distributions, thermal envelopes, and kernel densities. Speedy in turn is used for applications such as the Pacific islands Marine bioinvasions Alert Network (PacMAN).
 
-### Notebooks
+### Scripts
 
-Other data usage examples are available as [notebooks](notebooks).
+Other data usage examples are available as [scripts](scripts).
 
 ## Building the dataset
 

@@ -242,7 +242,7 @@ LIMIT 100;
       <h2>Notebooks &amp; examples</h2>
       <p>
         Worked examples are available as Jupyter notebooks and R scripts in the
-        <a href="https://github.com/iobis/speciesgrids/tree/main/notebooks" target="_blank" rel="noopener">notebooks folder on GitHub</a>.
+        <a href="https://github.com/iobis/speciesgrids/tree/main/scripts" target="_blank" rel="noopener">scripts folder on GitHub</a>.
         Each Jupyter notebook can be opened directly in Google Colab — no local setup required.
       </p>
 
@@ -253,8 +253,8 @@ LIMIT 100;
             <span class="nb-desc">Basic dataset access and species distribution visualisation</span>
           </div>
           <div class="nb-actions">
-            <a href="https://github.com/iobis/speciesgrids/blob/main/notebooks/demo.ipynb" target="_blank" rel="noopener" class="nb-btn gh-btn">GitHub</a>
-            <a href="https://colab.research.google.com/github/iobis/speciesgrids/blob/main/notebooks/demo.ipynb" target="_blank" rel="noopener" class="nb-btn colab-btn">Open in Colab</a>
+            <a href="https://github.com/iobis/speciesgrids/blob/main/scripts/demo.ipynb" target="_blank" rel="noopener" class="nb-btn gh-btn">GitHub</a>
+            <a href="https://colab.research.google.com/github/iobis/speciesgrids/blob/main/scripts/demo.ipynb" target="_blank" rel="noopener" class="nb-btn colab-btn">Open in Colab</a>
           </div>
         </div>
         <div class="notebook-row">
@@ -263,8 +263,8 @@ LIMIT 100;
             <span class="nb-desc">Query the dataset directly from S3 without downloading</span>
           </div>
           <div class="nb-actions">
-            <a href="https://github.com/iobis/speciesgrids/blob/main/notebooks/demo_s3.ipynb" target="_blank" rel="noopener" class="nb-btn gh-btn">GitHub</a>
-            <a href="https://colab.research.google.com/github/iobis/speciesgrids/blob/main/notebooks/demo_s3.ipynb" target="_blank" rel="noopener" class="nb-btn colab-btn">Open in Colab</a>
+            <a href="https://github.com/iobis/speciesgrids/blob/main/scripts/demo_s3.ipynb" target="_blank" rel="noopener" class="nb-btn gh-btn">GitHub</a>
+            <a href="https://colab.research.google.com/github/iobis/speciesgrids/blob/main/scripts/demo_s3.ipynb" target="_blank" rel="noopener" class="nb-btn colab-btn">Open in Colab</a>
           </div>
         </div>
         <div class="notebook-row">
@@ -273,8 +273,8 @@ LIMIT 100;
             <span class="nb-desc">Compute species richness for a defined ocean area</span>
           </div>
           <div class="nb-actions">
-            <a href="https://github.com/iobis/speciesgrids/blob/main/notebooks/area_diversity.ipynb" target="_blank" rel="noopener" class="nb-btn gh-btn">GitHub</a>
-            <a href="https://colab.research.google.com/github/iobis/speciesgrids/blob/main/notebooks/area_diversity.ipynb" target="_blank" rel="noopener" class="nb-btn colab-btn">Open in Colab</a>
+            <a href="https://github.com/iobis/speciesgrids/blob/main/scripts/area_diversity.ipynb" target="_blank" rel="noopener" class="nb-btn gh-btn">GitHub</a>
+            <a href="https://colab.research.google.com/github/iobis/speciesgrids/blob/main/scripts/area_diversity.ipynb" target="_blank" rel="noopener" class="nb-btn colab-btn">Open in Colab</a>
           </div>
         </div>
         <div class="notebook-row">
@@ -283,8 +283,8 @@ LIMIT 100;
             <span class="nb-desc">Spatial filtering with WKT geometries and diversity mapping</span>
           </div>
           <div class="nb-actions">
-            <a href="https://github.com/iobis/speciesgrids/blob/main/notebooks/area_diversity_spatial.ipynb" target="_blank" rel="noopener" class="nb-btn gh-btn">GitHub</a>
-            <a href="https://colab.research.google.com/github/iobis/speciesgrids/blob/main/notebooks/area_diversity_spatial.ipynb" target="_blank" rel="noopener" class="nb-btn colab-btn">Open in Colab</a>
+            <a href="https://github.com/iobis/speciesgrids/blob/main/scripts/area_diversity_spatial.ipynb" target="_blank" rel="noopener" class="nb-btn gh-btn">GitHub</a>
+            <a href="https://colab.research.google.com/github/iobis/speciesgrids/blob/main/scripts/area_diversity_spatial.ipynb" target="_blank" rel="noopener" class="nb-btn colab-btn">Open in Colab</a>
           </div>
         </div>
         <div class="notebook-row">
@@ -293,8 +293,8 @@ LIMIT 100;
             <span class="nb-desc">OSPAR region analysis with spatial joins</span>
           </div>
           <div class="nb-actions">
-            <a href="https://github.com/iobis/speciesgrids/blob/main/notebooks/ospar.ipynb" target="_blank" rel="noopener" class="nb-btn gh-btn">GitHub</a>
-            <a href="https://colab.research.google.com/github/iobis/speciesgrids/blob/main/notebooks/ospar.ipynb" target="_blank" rel="noopener" class="nb-btn colab-btn">Open in Colab</a>
+            <a href="https://github.com/iobis/speciesgrids/blob/main/scripts/ospar.ipynb" target="_blank" rel="noopener" class="nb-btn gh-btn">GitHub</a>
+            <a href="https://colab.research.google.com/github/iobis/speciesgrids/blob/main/scripts/ospar.ipynb" target="_blank" rel="noopener" class="nb-btn colab-btn">Open in Colab</a>
           </div>
         </div>
         <div class="notebook-row">
@@ -303,8 +303,8 @@ LIMIT 100;
             <span class="nb-desc">Global biodiversity indicators derived from the grid</span>
           </div>
           <div class="nb-actions">
-            <a href="https://github.com/iobis/speciesgrids/blob/main/notebooks/global_indicator.ipynb" target="_blank" rel="noopener" class="nb-btn gh-btn">GitHub</a>
-            <a href="https://colab.research.google.com/github/iobis/speciesgrids/blob/main/notebooks/global_indicator.ipynb" target="_blank" rel="noopener" class="nb-btn colab-btn">Open in Colab</a>
+            <a href="https://github.com/iobis/speciesgrids/blob/main/scripts/global_indicator.ipynb" target="_blank" rel="noopener" class="nb-btn gh-btn">GitHub</a>
+            <a href="https://colab.research.google.com/github/iobis/speciesgrids/blob/main/scripts/global_indicator.ipynb" target="_blank" rel="noopener" class="nb-btn colab-btn">Open in Colab</a>
           </div>
         </div>
         <div class="notebook-row">
@@ -313,7 +313,7 @@ LIMIT 100;
             <span class="nb-desc">R examples using duckdb + DBI for regional queries</span>
           </div>
           <div class="nb-actions">
-            <a href="https://github.com/iobis/speciesgrids/tree/main/notebooks" target="_blank" rel="noopener" class="nb-btn gh-btn">GitHub</a>
+            <a href="https://github.com/iobis/speciesgrids/tree/main/scripts" target="_blank" rel="noopener" class="nb-btn gh-btn">GitHub</a>
           </div>
         </div>
       </div>

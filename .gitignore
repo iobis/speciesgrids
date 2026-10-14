@@ -7,6 +7,7 @@ output*
 __pycache__
 dev.py
 build/
+build_no_edna/
 cache/
 temp*
 h3_*
