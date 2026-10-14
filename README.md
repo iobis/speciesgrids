@@ -36,6 +36,9 @@ An [h3 grid](https://h3geo.org/) at [resolution 7](https://h3geo.org/docs/core-l
 
 ```bash
 aws s3 cp --no-sign-request s3://obis-products/speciesgrids/h3_7/data.parquet .
+
+# eDNA excluded build
+aws s3 cp --no-sign-request s3://obis-products/speciesgrids/edna_exluded/20261014/h3_7/data.parquet .
 ```
 
 ### Metadata
